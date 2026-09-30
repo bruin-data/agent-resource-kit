@@ -5,7 +5,7 @@
 **Do not open a public issue.**
 
 Use GitHub's private vulnerability reporting on this repository (Security, then
-Report a vulnerability), or email the maintainers.
+Report a vulnerability).
 
 Include what you found, how to reproduce it, and the impact you think it has.
 We will acknowledge within a few working days and say what we plan to do. Ask
