@@ -1,0 +1,7 @@
+# blog-image-generator sample script. Install with: pip install -r requirements.txt
+#
+# Pillow 10 or newer is required for Image.Resampling, which this script uses.
+Pillow>=10.0.0,<13.0.0
+
+# Nothing else. The Unsplash calls use urllib from the standard library, so
+# there is no HTTP client dependency and no SDK to keep up to date.
