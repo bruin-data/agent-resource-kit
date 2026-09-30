@@ -105,8 +105,11 @@ cp -R agent-resource-kit/resources/bruin-agent ~/my-project/.claude/skills/
 cp -R agent-resource-kit/resources/startup-data-kit/revenue-analytics ~/my-project/.claude/skills/
 ```
 
-`.claude/skills/` for Claude Code, `.agents/skills/` for Bruin and several
-others. Skills are independent; take only what you need.
+`.claude/skills/` for Claude Code, `.agents/skills/` for several others.
+Bruin's own `bruin ai skills` uses whichever of the two the project already has,
+and links both if both exist
+([`commands/ai-skills`](https://getbruin.com/docs/bruin/commands/ai-skills.html)).
+Skills are independent; take only what you need.
 
 **Or hand your agent the link.**
 

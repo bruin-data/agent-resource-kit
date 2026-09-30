@@ -12,7 +12,7 @@ description: Use when analysing advertising spend, CAC, ROAS, attribution, campa
 > own documentation, those are right and this file is stale. Ad platform metric
 > definitions and attribution windows change often and without notice; check
 > them rather than trusting a description here. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 Marketing data is the easiest place to produce a number that is precise,
 well presented, and meaningless. Attribution is a modelling choice, not a
@@ -20,22 +20,47 @@ measurement, and the main job here is keeping that visible.
 
 Setup is in the `bruin-agent` skill. This assumes a project exists.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `bruin_get_docs_tree` (the `ingestion/` section) for which ad, lifecycle, CRM
+  and support sources exist, `ingestion/<source>` (for example
+  `ingestion/google-ads`) for a source's tables and connection fields, and
+  `getting-started/templates-docs/ecommerce-README` for the `ecommerce`
+  template. Page names can differ from the connection type key (`google-ads` is
+  `googleads`).
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
+
 ## Sources
 
-| Group | Connectors |
-|---|---|
-| Ad platforms | `googleads`, `facebookads`, `tiktokads`, `linkedinads`, `appleads`, `snapchatads`, `pinterest`, `reddit_ads`, `applovin`, `applovinmax`, `sklik` |
-| Mobile attribution | `adjust`, `appsflyer` |
-| Email and lifecycle | `klaviyo`, `mailchimp`, `braze`, `customerio`, `sendgrid` |
-| CRM | `hubspot`, `salesforce`, `pipedrive`, `attio`, `twenty` |
-| Support, as a churn signal | `intercom`, `zendesk`, `freshdesk`, `gorgias` |
+Bruin ingests ad platforms, mobile attribution, email and lifecycle tools, CRMs,
+and support tools (useful as a churn signal). Check the docs tree for the
+current list rather than assuming a connector exists or does not.
 
-**Template:** `ecommerce` composes Shopify, Stripe, Klaviyo or HubSpot,
-advertising and GA4 or Mixpanel into raw, staging and reporting layers including
-marketing reports. Start there when several of these are in play.
+Run `bruin init --help` for templates. Most of these sources have none:
+ingestion is supported, the modelling is yours.
 
-Otherwise most of these are connectors without a full template: ingestion is
-supported, the modelling is yours.
+The `ecommerce` template is not a general marketing template. It always
+includes Shopify, takes Stripe or Shopify Payments, and supports Facebook,
+Google and TikTok ads only. Read its README before recommending it. If the user
+is on it, read `rpt_marketing_roi` before quoting it: as checked, its
+`attributed_revenue` joins paid orders to web sessions on date alone, so each
+day's paid revenue is counted against every channel with sessions that day, once
+per session row. That is not an attribution model, and its `roas` inherits the
+problem. Read the SQL in the user's copy, since the template may have changed.
 
 ## Start with one platform, not all of them
 
@@ -111,8 +136,8 @@ Small things that cause persistent unexplained gaps:
 
 ## Never
 
-- **Ask for a credential** in chat or as a command argument. Many of these
-  platforms use OAuth; route through `bruin connections add`.
+- **Ask for a credential** in chat or as a command argument. See
+  **Credentials** above.
 - **Write to an ad platform.** Pausing a campaign, changing a budget or sending
   an email is a write with immediate money and reputation consequences. Read
   only. Propose the change and let a person make it.
@@ -128,9 +153,3 @@ Small things that cause persistent unexplained gaps:
 | "Should we cut this channel?" | Incrementality, not attributed ROAS. A channel can score well and be claiming credit for customers who would have arrived anyway. |
 | "Why did CPMs rise?" | Usually auction dynamics you cannot see. Say so rather than inventing a reason. |
 | "What is our true CAC?" | A decision about which costs count: paid only, plus salaries, plus tooling. Ask. |
-
-## Reference
-
-- Templates: https://getbruin.com/docs/bruin/getting-started/templates.html
-- Ingestr sources: https://getbruin.com/docs/ingestr/
-- Connectors by domain: [../../bruin-agent/connectors.md](../../bruin-agent/connectors.md)

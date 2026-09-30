@@ -12,7 +12,7 @@ description: Use when working on SEO, GEO or AEO, measuring whether a brand appe
 > documentation, or a measurement tool's own documentation, those are right and
 > this file is stale. This area moves faster than any other in this repository,
 > so treat specifics here as a starting point rather than current fact. Written
-> against Bruin CLI `v0.11.765`, checked 2026-09-29.
+> against Bruin CLI `v0.11.765`, checked 2026-09-30.
 
 Three overlapping things sit under this heading:
 
@@ -27,36 +27,64 @@ different data and have very different evidence quality.
 
 Setup is in the `bruin-agent` skill. This assumes a project exists.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `ingestion/gsc` and `ingestion/google_analytics` for the Google connectors,
+  `getting-started/templates-docs/google-web-analytics-README` for the template
+  that models both exports, `ingestion/s3` and `ingestion/gcs` for loading log
+  files, and `ingestion/g2` and `ingestion/trustpilot` for review sites.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
+
 ## What Bruin can ingest directly
 
-| Need | Connector |
-|---|---|
-| Search Console performance | `gsc` (service account JSON plus site URL) |
-| GA4, for what search traffic then does | `googleanalytics` |
-| Both, already exported to BigQuery | `bruin init google-web-analytics` |
-| Edge and bot traffic patterns | `cloudflare_radar` |
-| Review-site presence | `g2`, `trustpilot` |
+- **Search Console performance:** `ingestion/gsc`. The service account has to
+  be added as a user on the property before anything loads.
+- **GA4, for what search traffic then does:** `ingestion/google_analytics`.
+- **Both, already exported to BigQuery:** the `google-web-analytics` template.
+- **Server and CDN logs, for crawler traffic:** `ingestion/s3` or
+  `ingestion/gcs`. See below.
+- **Review-site presence:** `ingestion/g2`, `ingestion/trustpilot`.
 
 **There is no Bruin connector for AI answer visibility.** That measurement comes
 from third-party tools that sample assistant responses on a schedule. Say so
 rather than implying the pipeline can produce it.
 
+Cloudflare Radar (`ingestion/cloudflare-radar`) is Internet-wide aggregate data,
+not this site's traffic or crawler logs. Use it for context only.
+
 ## Search Console, the honest baseline
 
 This is where real, verifiable data lives.
 
-- Clicks, impressions, CTR and average position. No sessions, no revenue.
-- 16 months of history maximum. Load it into the warehouse if longer matters.
+- No sessions, no revenue. GSC clicks will not match GA4 organic sessions.
+- Roughly 16 months of history. Load it into the warehouse if longer matters.
+- Two to three days of lag, and past days are revised in place. Leave the most
+  recent days out of any comparison.
 - Anonymised queries are excluded from query-level rows but counted in totals,
   so breakdowns will not sum to the total. Do not try to reconcile them.
 - Average position is an average across impressions, weighted oddly. Averaging
   it across queries compounds the problem. Prefer distributions.
-- GSC clicks will not match GA4 organic sessions. Different measurement points.
 
-Useful joins once it is in the warehouse: query and page performance over time,
-pages gaining or losing impressions, queries where position improved but clicks
-did not, and, if a landing-page-to-signup key exists, which organic pages
-produce paying customers.
+If the user is on the `google-web-analytics` template, it already builds query
+opportunities (`gsc_query_opportunities`), page decay (`gsc_page_trend`), new
+and lost queries (`gsc_new_and_lost_queries`) and the landing-page join to GA4
+(`ga4_gsc_landing_page_performance`). Read its README and use those before
+writing your own. Which organic pages produce paying customers still needs a
+landing-page-to-signup key.
 
 ## Measuring AI answer visibility
 
@@ -98,9 +126,11 @@ user-triggered fetches. A live fetch means a real person asked something and an
 assistant went to the site to answer it, which is the closest thing to a
 conversion signal this category has.
 
-Ingest logs from `s3`, `gcs` or `cloudflare_radar` depending on the stack. Check
-`robots.txt` first: if these agents are disallowed, absence is the explanation
-and no amount of content work will change it.
+Ingest logs from wherever the stack writes them, through `ingestion/s3` or
+`ingestion/gcs`. Both read CSV, JSONL and Parquet, so a log in any other shape
+needs converting before it loads. Check `robots.txt` first: if these agents are
+disallowed, absence is the explanation and no amount of content work will
+change it.
 
 ## Referral traffic from assistants
 
@@ -138,8 +168,8 @@ trustworthy content. Say that when asked for a shortcut.
 
 ## Never
 
-- **Ask for a credential** in chat. GSC uses service account JSON, a private key.
-  Route through `bruin connections add` or an environment variable.
+- **Ask for a credential** in chat or as a command argument. A Google service
+  account key is a private key. See **Credentials** above.
 - **Publish content.** Drafting is fine; pushing to a CMS, a repository or a
   live site is a write. Propose it and let a person publish.
 - **Change `robots.txt` or crawler directives** without explicit approval. A
@@ -161,6 +191,4 @@ that distinction matters more than in any other.
 
 ## Reference
 
-- Google web analytics template: https://getbruin.com/docs/bruin/getting-started/templates.html
-- Ingestr sources: https://getbruin.com/docs/ingestr/
 - Traffic side: [../web-analytics/SKILL.md](../web-analytics/SKILL.md)

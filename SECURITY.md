@@ -69,6 +69,10 @@ What resources use instead, in preference order:
 | Environment variable reference | Deployed or shared setups. Config holds `${VAR}`, never the value. |
 | External secret manager | Teams and production. Vault, Doppler, AWS Secrets Manager, Azure Key Vault. |
 
+For which secret backends Bruin itself supports, and how to configure each, see
+Bruin's [`secrets/overview`](https://getbruin.com/docs/bruin/secrets/overview.html)
+rather than this table.
+
 Resources ask for read-only scopes and tell you what they will access before
 they access it.
 

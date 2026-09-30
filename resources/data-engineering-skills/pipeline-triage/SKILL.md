@@ -10,24 +10,31 @@ description: Use when an alert fires, a scheduled tick runs, or someone asks wha
 > **Upstream documentation wins.** Where this file disagrees with the
 > [Bruin docs](https://getbruin.com/docs/bruin/overview.html) or `bruin --help`,
 > upstream is right and this file is stale. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 This is the dispatcher. Every self-healing run starts here. Look at pipeline
 state, decide what is wrong, hand each finding to a specialist. Do not repair
 anything in this skill.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `commands/cloud` for pipelines, runs, instances and validation errors,
+  `cloud/mcp-setup` for the Cloud MCP tools, `commands/query` for warehouse
+  probes, and `commands/ai-skills` for the built-in skills you route to.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
 ## Which skills you are routing to
 
-Bruin's CLI ships the diagnostic skills. Install them once, then route by name:
-
-```bash
-bruin ai skills all
-```
-
-That installs `pipeline-diagnose`, `schema-drift-check`,
-`quality-check-investigate`, `freshness-check`, `duplicate-investigate`,
-`maintenance-action` and `bruin-semantic-layer`. Do not restate what they do;
-read the installed `SKILL.md`. The orchestration skills sit alongside them:
+Bruin's built-in diagnosis skills, installed with `bruin ai skills all`. Route
+by the names the installed `SKILL.md` files carry, and read them rather than
+restating what they do. The orchestration skills sit alongside them:
 [`pipeline-backfill`](../pipeline-backfill/SKILL.md),
 [`anomaly-investigate`](../anomaly-investigate/SKILL.md),
 [`maintenance-pr`](../maintenance-pr/SKILL.md) and
@@ -35,14 +42,16 @@ read the installed `SKILL.md`. The orchestration skills sit alongside them:
 
 ## Access
 
-Prefer the Bruin Cloud MCP server when it is connected. Otherwise use
-`bruin cloud ... --output json`. Do not use local `bruin run` for operational
-execution; it does not reflect Cloud state.
+Either Cloud interface works. Default to `bruin cloud ... --output json`; use
+the Bruin Cloud MCP server when the host has it connected. Do not use local
+`bruin run` for operational execution; it does not reflect Cloud state.
 
-Never ask for a Bruin Cloud API key in chat, and never pass one as `--api-key`
-on a command line where it lands in shell history and the process list. Tell
-the user to run `bruin cloud login`, or to export `BRUIN_CLOUD_API_KEY`
-themselves. Warehouse credentials go through `bruin connections add`.
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
 
 ## When to use
 
@@ -65,31 +74,38 @@ Do not use it to run fixes.
 
 ## Context to gather
 
-Run all of these. Silence on one signal is itself a signal.
+Collect every signal below. Silence on one signal is itself a signal. Take the
+exact commands and flags from `bruin cloud <command> --help`; the Cloud MCP
+equivalents are named in brackets (some hosts add a `-tool` suffix).
 
-1. Resolve the project. If more than one is visible and none was supplied,
-   stop and ask. Do not guess.
-2. Pipeline inventory: `bruin cloud pipelines list --project-id <id>
-   --output json`, and `pipelines get --name <pipeline>` for one pipeline.
-3. Validation errors: `bruin cloud pipelines errors --output json`. Filter by
-   project and pipeline client-side; check `--help` before assuming a flag.
-4. Recent runs: `bruin cloud runs list --project-id <id> --pipeline <p>
-   --limit 20 --output json`.
-5. Latest run and its diagnosis: `bruin cloud runs get ... --latest` and
-   `bruin cloud runs diagnose ... --latest`, both `--output json`.
-6. Asset and instance state: `bruin cloud assets list`, `bruin cloud instances
-   list` and `bruin cloud instances failed-logs`, each scoped to the run with
-   `--run-id <id>` or `--latest`.
-7. Freshness: compare the last successful run and instance timestamps to the
-   declared schedule or the historical cadence.
-8. Repository changes: `git log`, recent branches and PRs touching the failing
-   assets and their upstreams. Consider code before assigning cause.
-9. Warehouse probes only if Cloud state is not enough. Use read-only
-   `bruin query --connection <c> --query <sql> --description "<why>"
-   --limit 1000 --output json`, and dry-run expensive scans first.
+1. **Project.** If more than one is visible and none was supplied, stop and
+   ask. Do not guess.
+2. **Pipeline inventory.** `bruin cloud pipelines list` and `pipelines get`
+   (`pipeline-list`).
+3. **Validation errors.** `bruin cloud pipelines errors`
+   (`validation-error-list`). In `v0.11.765` it takes no project or pipeline
+   filter, so filter the response client-side.
+4. **Recent runs.** `bruin cloud runs list` over the `since` window
+   (`pipeline-run-list`).
+5. **Latest run and its diagnosis.** `bruin cloud runs get` and
+   `runs diagnose`, with `--latest` or `--run-id`.
+6. **Asset instances and failed logs.** `bruin cloud instances list` and
+   `instances failed-logs`, scoped to the run with `--run-id <id>` or
+   `--latest` (`asset-instance-list`, `asset-instance-logs`). `bruin cloud
+   assets list` takes only a project and pipeline; it has no run scope.
+7. **Asset health.** The Cloud MCP `asset-health` tool, where the host has it.
+   Record "not checked" otherwise.
+8. **Freshness.** Compare the last successful run and instance timestamps to
+   the declared schedule or the historical cadence.
+9. **Repository changes.** `git log`, recent branches and PRs touching the
+   failing assets and their upstreams. Consider code before assigning cause.
+10. **Warehouse probes, only if Cloud state is not enough.** Read-only
+    `bruin query` with `--description "<why>"`, an explicit `--limit`, and a
+    `--dry-run` first for expensive scans.
 
-Treat run statuses as the API returns them: `success`, `failed`, `running`.
-Asset instances may also show `checks_failed`.
+Read run and instance statuses from the response rather than from a fixed list;
+the vocabulary differs between the CLI help, the docs and the MCP tools. Asset
+instances may show `checks_failed`, which is not the same as `failed`.
 
 Cache the raw output in `.context/triage-<timestamp>.json` so downstream skills
 read it rather than re-querying.

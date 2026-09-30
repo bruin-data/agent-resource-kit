@@ -10,7 +10,7 @@ description: Use when analysing product usage, activation, feature adoption, eng
 > **Upstream documentation wins.** Where this file disagrees with the [Bruin
 > docs](https://getbruin.com/docs/bruin/overview.html) or with PostHog,
 > Mixpanel, Amplitude or Firebase documentation, those are right and this file
-> is stale. Written against Bruin CLI `v0.11.765`, checked 2026-09-29.
+> is stale. Written against Bruin CLI `v0.11.765`, checked 2026-09-30.
 
 Event data is the one source that can explain *why* revenue moved. It is also
 the one where the data you need most often turns out never to have been
@@ -18,21 +18,62 @@ captured.
 
 Setup is in the `bruin-agent` skill. This assumes a project exists.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `getting-started/templates-docs/posthog-bigquery-README` and
+  `getting-started/templates-docs/firebase-README` for what each template builds
+  and needs, `ingestion/<source>` (for example `ingestion/mixpanel`) for a
+  source's tables and connection fields, and `commands/init` for `--merge`.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
+
 ## Sources and where to start
 
-| They use | Start with |
-|---|---|
-| PostHog, BigQuery | `bruin init posthog-bigquery` (account-level engagement and feature-adoption reports, dashboard) |
-| Firebase, mobile | `bruin init firebase` |
-| Mixpanel, Amplitude | Connector exists, no template. Ingest and model it yourself. |
-| Mobile subscriptions | `revenuecat`, `adapty` |
-| Feedback and NPS | `satismeter`, `surveymonkey`, `typeform`, `trustpilot`, `g2` |
+Run `bruin init --help` for the current template list, then read the README of
+the one you pick.
 
-Adding to an existing billing project:
+- **PostHog on BigQuery: `posthog-bigquery`.** Two things in its README change
+  what you can report. Backfill `posthog_raw.events` one day per run: a wider
+  window silently returns partial data. And the account layer is built from
+  person properties set by `identify`: without `company`, `accounts` and the
+  account-grain reports are empty; without `signup_date`, retention cohorts are
+  empty; without `plan`, every account reads `unknown`. `persons` is current
+  state, so today's plan is carried onto past months. Identity resolves through
+  `posthog_stage.person_distinct_ids`, accounts through `posthog_stage.accounts`.
+- **Firebase: `firebase`.** It models a Firebase Analytics export that is
+  already in BigQuery. There is no Firebase ingestion connector, so the export
+  has to be switched on first.
+- **Mixpanel, Amplitude, RevenueCat, Adapty, feedback and NPS tools.**
+  Connectors without a template. Read `ingestion/<source>`, ingest, and model it
+  yourself.
+
+Adding PostHog to an existing billing pipeline:
 
 ```bash
-bruin init --merge posthog-bigquery
+bruin init posthog-bigquery <existing-pipeline-folder> --merge
 ```
+
+The folder must already contain `pipeline.yml`. `--merge` copies assets and
+macros and never overwrites, but it does not merge `pipeline.yml`. The PostHog
+assets need the template's `variables` and its ingestr `default:` block. Merged
+into a pipeline that already has its own `default:` block, such as
+`stripe-bigquery`, the PostHog raw assets inherit the wrong
+`source_connection`. Copy what they need across, set the connection on those
+assets, or keep PostHog as its own pipeline. Show the user the diff to
+`pipeline.yml` before applying it.
 
 ## Establish the identity join first
 
@@ -113,7 +154,8 @@ halved over six weeks is the call to make this week.
 
 ## Never
 
-- **Ask for a credential** in chat or as a command argument.
+- **Ask for a credential** in chat or as a command argument. See
+  **Credentials** above.
 - **Send an event or write to the product.** Read only.
 - **Pull raw user-level event streams into context.** They are enormous and
   usually contain personal data. Aggregate first, in SQL, then look.
@@ -135,6 +177,4 @@ churned" is 27% and is also three accounts.
 
 ## Reference
 
-- PostHog template: https://getbruin.com/docs/bruin/getting-started/templates.html
-- Ingestr sources: https://getbruin.com/docs/ingestr/
 - Revenue side of the join: [../revenue-analytics/SKILL.md](../revenue-analytics/SKILL.md)

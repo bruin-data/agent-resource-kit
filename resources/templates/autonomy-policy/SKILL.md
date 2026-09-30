@@ -23,6 +23,10 @@ Ask the user the four questions below, then write the filled-in template into
 their `AGENTS.md`. Do not guess the answers. A policy the user did not choose is
 worse than none, because it reads as though they did.
 
+If a tool already manages a marked section of that `AGENTS.md` (Bruin's
+`bruin ai skills` does), write the policy outside the markers. The tool rewrites
+what is inside them on its next update.
+
 1. Which systems and environments are in scope, and which are explicitly out?
 2. What may you do without asking?
 3. What always needs a human first?

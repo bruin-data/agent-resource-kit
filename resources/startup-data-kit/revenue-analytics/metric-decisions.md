@@ -3,12 +3,16 @@
 > **Upstream documentation wins.** This file describes choices, not vendor
 > behaviour. For how a specific field actually behaves, your billing provider's
 > documentation is the source of truth, and their own reporting is what you
-> reconcile against. Where this file disagrees with either, they are right.
-> Checked 2026-09-29.
+> reconcile against. For what a Bruin template chose, its README is. Where this
+> file disagrees with any of them, they are right. Template defaults below are
+> from the Bruin CLI `v0.11.765` template READMEs, checked 2026-09-30.
 
 Ten choices that change the MRR number. None of them have a single correct
-answer, and no template can make them for the user. A model that picks silently
-is teaching them a hard question is already settled.
+answer. Templates ship defaults for several: read the metric policy in the
+template's README (`bruin_get_doc_content('getting-started/templates-docs/<name>-README')`)
+and confirm each default with the user. A default nobody confirmed is still a
+silent pick, and a model that picks silently is teaching the user a hard
+question is already settled.
 
 Read this when building or reviewing a revenue model. For a single question,
 surface only the decisions that actually bear on it.
@@ -36,6 +40,10 @@ them, or not saying which is in use, is not.
 
 **Ask:** which one, and is the rate and its date recorded next to the number?
 
+**On a template:** the Stripe and Chargebee templates report per currency and
+apply no FX. Summing their output across currencies is the user's choice to
+make, not the template's.
+
 ## 3. Usage and metered billing
 
 **What it changes:** whether "recurring" means anything.
@@ -47,6 +55,9 @@ makes the metric volatile and undermines the reason to track MRR at all.
 **Ask:** report it as a separate line, or define an explicit smoothing window
 such as a trailing three-month average, and label it as smoothed.
 
+**On a template:** check what its README chose. `stripe-bigquery` leaves metered
+prices out of MRR entirely.
+
 ## 4. Trials
 
 **What it changes:** the customer count, and sometimes the churn rate.
@@ -57,6 +68,9 @@ the top of the funnel. Counting them as churn when the trial lapses inflates
 churn badly.
 
 **Ask:** are they customers, and does a lapsed trial count as churn?
+
+**On a template:** check what its README chose. `chargebee-bigquery` leaves
+trials out unless `in_trial` is added to `mrr_active_statuses`.
 
 ## 5. Paused and past-due subscriptions
 
@@ -70,16 +84,24 @@ looks like churn.
 **Ask:** after how many days or failed attempts does a non-paying subscription
 stop counting? Pick a number and write it down.
 
+**On a template:** check what its README chose. `stripe-bigquery` counts active
+and past-due subscriptions. `chargebee-bigquery` counts the statuses in
+`mrr_active_statuses`, by default `active` and `non_renewing`.
+
 ## 6. Discounts and coupons
 
 **What it changes:** usually a few percent, permanently.
 
-MRR is normally net of discount. A customer on a `$199` plan with a 20% coupon
-is `$159.20` of MRR. Reporting list price overstates revenue and makes the model
-disagree with cash for a reason nobody can find later.
+This file recommends MRR net of discount. A customer on a `$199` plan with a 20%
+coupon is `$159.20` of MRR. Reporting list price overstates revenue and makes
+the model disagree with cash for a reason nobody can find later.
 
 **Ask:** which side of the discount is this number on, and what happens when the
 coupon expires?
+
+**On a template:** check what its README chose. `stripe-bigquery` reports gross
+list-price MRR with discounts not applied, the opposite of the recommendation
+above. Say so next to any number from it.
 
 ## 7. Taxes
 
@@ -125,6 +147,9 @@ Three conventions:
 All three are defensible. Only one should appear in the reports.
 
 **Ask:** which one, and is it stated next to the number?
+
+**On a template:** check what its README chose. The Stripe and Chargebee
+templates both report MRR observed at month end.
 
 ## Using this list
 

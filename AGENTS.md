@@ -31,36 +31,37 @@ So:
 - Prefer live sources in this order: the tool's own `--help` or MCP tools, then
   its official documentation, then this repository.
 
-### Use Bruin MCP to check, when it is available
+### Look Bruin up live, not here
 
-For anything Bruin, MCP is usually the fastest way to answer a question from the
-tool rather than from this repository. Two different servers, and they answer
-different questions:
+Two MCP servers, and they answer different questions:
 
 | Server | What it is good for |
 |---|---|
-| **Local**, `bruin mcp` over stdio | Bruin docs and project context. Reach for it before quoting a command, flag, asset type or semantic-layer field |
-| **Bruin Cloud** | The user's actual pipelines, assets, runs, connection types and backfills. Reach for it when the question is about their environment, not about Bruin in general |
+| **Local**, `bruin mcp` over stdio | Bruin's documentation, nothing else. Three tools: `bruin_get_docs_tree` lists every page, `bruin_get_doc_content('<dir>/<page>')` reads one, `bruin_get_overview` summarises Bruin. It runs no commands and reads no project |
+| **Bruin Cloud** | The user's actual pipelines, assets, runs, connections, connection types and backfills. Reach for it when the question is about their environment, not about Bruin in general |
 
-Concrete uses that come up constantly here:
+Where to find what, in the order to try:
 
-- **Connector and template lists go stale.** `connection-types` returns every
-  supported type and its required fields. `bruin init --help` returns the live
-  template list. Prefer either over the tables in
-  [`resources/bruin-agent/connectors.md`](resources/bruin-agent/connectors.md),
-  and say so if they differ.
-- **Before writing that a command or flag exists**, confirm it. `--help` is
-  enough; MCP docs tools are better when you also need the surrounding context.
-- **Before diagnosing a user's pipeline**, read its real state rather than
-  assuming the shape a resource describes.
+| You need | Ask | Watch out for |
+|---|---|---|
+| A command or flag | `bruin <command> --help` | The docs pages lag the CLI; `--help` is authoritative |
+| Template names | `bruin init --help` | `bruin_get_overview` and `getting-started/templates` both miss templates |
+| What a template builds and needs before its first run | `getting-started/templates-docs/<name>-README` | Some templates, such as `stripe-databricks`, have no README |
+| A source's tables and connection fields | `ingestion/<source>`; warehouses under `platforms/<name>` | Page names can differ from the connection type key (`google-ads` is `googleads`) |
+| Materialisation, checks, semantic layer, secrets | `assets/materialization`, `quality/overview`, `core-concepts/semantic-layer`, `secrets/overview` | – |
+| Built-in agent skills | `commands/ai-skills` | – |
+| MCP setup for a host | `getting-started/bruin-mcp`, `cloud/mcp-setup` | – |
+| Cloud commands | `commands/cloud`, then `bruin cloud <command> --help` | – |
+| The user's pipelines, runs, connections | Bruin Cloud MCP, or `bruin cloud ... --output json` | `connection-list` returns metadata only, never secret values, so it cannot confirm a credential is correct |
+| ingestr internals | [ingestr docs](https://getbruin.com/docs/ingestr/) | Not served by `bruin mcp` |
 
-Two limits worth knowing. `connection-list` returns metadata only and never
-secret values, so do not expect it to confirm a credential is correct. And
-registering either server changes the user's configuration, which sits in the
-`Never` list below: show the command, let them run it.
+Without MCP, the same pages are at `https://getbruin.com/docs/bruin/<dir>/<page>.html`.
+Not this repository.
 
-If MCP is not available, fall back to `bruin --help`, `bruin <command> --help`,
-and the documentation. Not to this repository.
+Before writing that a command or flag exists, confirm it. Before diagnosing a
+user's pipeline, read its real state rather than assuming the shape a resource
+describes. Registering either MCP server changes the user's configuration,
+which sits in the `Never` list below: show the command, let them run it.
 
 Resources here exist to say *which* tool to reach for and *what to be careful
 about*, not to be a second copy of its manual. Where a file starts restating

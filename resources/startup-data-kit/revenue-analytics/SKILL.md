@@ -10,7 +10,7 @@ description: Use when answering questions about MRR, ARR, churn, retention, expa
 > **Upstream documentation wins.** Where this file disagrees with the [Bruin
 > docs](https://getbruin.com/docs/bruin/overview.html), `bruin --help`, or your
 > billing provider's own documentation, those are right and this file is stale.
-> Written against Bruin CLI `v0.11.765`, checked 2026-09-29. The provider's own
+> Written against Bruin CLI `v0.11.765`, checked 2026-09-30. The provider's own
 > reporting is also the reference you reconcile against, not this file.
 
 The failure mode here is not an error message. It is a confident, well formatted,
@@ -19,23 +19,50 @@ make that less likely.
 
 Setup is in the `bruin-agent` skill. This assumes a project exists.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `getting-started/templates-docs/stripe-bigquery-README` and
+  `getting-started/templates-docs/chargebee-bigquery-README` for what each
+  template builds and the metric policy it ships, `ingestion/<source>` (for
+  example `ingestion/stripe`) for a source's tables and loading modes,
+  `ingestion/frankfurter` and `ingestion/exchangeratesapi` for FX rates,
+  `core-concepts/semantic-layer` and `quality/overview`.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
+
 ## Sources and where to start
 
-| They use | Start with |
-|---|---|
-| Stripe, BigQuery | `bruin init stripe-bigquery` |
-| Stripe, Databricks | `bruin init stripe-databricks` |
-| Chargebee | `bruin init chargebee-bigquery` |
-| Shopify | `shopify-duckdb`, `shopify-bigquery` or `shopify-clickhouse` |
-| Several sources at once | `ecommerce` |
-| Paddle, Recurly, RevenueCat, Adapty, Square, FastSpring, Solidgate, Primer, Wise | Connector exists, no template. Ingest with an `ingestr` asset and model it yourself. |
+Run `bruin init --help` for the current template list and pick the billing one
+that matches the user's source and warehouse. Before recommending it, read its
+README with `bruin_get_doc_content('getting-started/templates-docs/<name>-README')`.
+Two caveats the README will not flag for you:
 
-`stripe-bigquery` already publishes MRR by customer, MRR movements, subscription
-KPIs and invoice billings. Read those assets before writing any SQL. Rebuilding
-that logic inline is how two answers to the same question start to differ.
+- **`stripe-databricks`** is bronze ingestion plus one silver table, with no MRR
+  reports, and has no README in the docs. Read the `README.md` it scaffolds.
+- **`shopify-bigquery`** only copies raw Shopify tables. The modelling is yours.
 
-Multi-currency: `frankfurter` needs no credentials, `exchangeratesapi` needs a
-key. Decide the conversion policy before wiring either in.
+For a billing source with no template, read `ingestion/<source>` and model it
+yourself. Check the docs tree rather than assuming a connector exists.
+
+If the user is on a template, read its report assets before writing any SQL.
+Rebuilding that logic inline is how two answers to the same question start to
+differ.
+
+Multi-currency: `ingestion/frankfurter` and `ingestion/exchangeratesapi` both
+serve rates. Decide the conversion policy before wiring either in.
 
 ## Before answering any revenue question
 
@@ -46,7 +73,10 @@ key. Decide the conversion policy before wiring either in.
    it. A metric asked for by name returns the same definition every time.
 3. **Prefer report tables over raw tables.**
 4. **Check freshness first.** A correct number from a stale pipeline is still
-   the wrong answer.
+   the wrong answer. Read the last runs from Bruin Cloud MCP
+   (`pipeline-run-list`, `asset-runs`, or `asset-health` on OXR-orchestrated
+   pipelines) or `bruin cloud runs list --output json`, then the maximum date in
+   the raw table.
 
 ## Always state these alongside a number
 
@@ -62,7 +92,9 @@ because one Growth account churned and nothing replaced it" is.
 ## The definitions that change the number
 
 Not edge cases. Each produces a different, defensible MRR, and a model that
-picks silently teaches the user that a hard question is settled.
+picks silently teaches the user that a hard question is settled. The Stripe and
+Chargebee templates ship defaults for several of them; read the README's metric
+policy and confirm each default with the user rather than inheriting it.
 
 Full detail in [metric-decisions.md](metric-decisions.md). Read it when building
 or reviewing a model, not for every question.
@@ -116,6 +148,16 @@ Cheapest first. Usually it is one of the first two.
    back to raw record. Report the trace, not just the conclusion.
 4. **Check the definition against the question.** Most disagreements about a
    revenue number are disagreements about a definition.
+5. **Check what the load can see.** The `stripe-bigquery` raw assets load
+   incrementally on Stripe's `created` timestamp, so a subscription cancelled or
+   upgraded, or an invoice paid or voided, after its creation window is not
+   picked up until a wider re-run. Read the template README's incremental-loading
+   section and `ingestion/stripe` before blaming the model.
+6. **Check how much history exists.** MRR on the Stripe and Chargebee templates
+   comes from daily snapshots. Stripe history starts at the first run and cannot
+   be backfilled; Chargebee can backfill subscription episodes but not repricing.
+   Movement and retention need two contiguous months of snapshots before they
+   classify anything. Empty is not zero.
 
 If the model and the source genuinely disagree, show the gap. Do not adjust a
 model to match a number someone expected.
@@ -123,7 +165,7 @@ model to match a number someone expected.
 ## Never
 
 - **Ask for a credential** in chat or as a command argument. If offered one, say
-  not to send it and to rotate it if already sent.
+  not to send it and to rotate it if already sent. See **Credentials** above.
 - **Print a credential**, including in errors, summaries and generated files.
 - **Run against production** unless asked by name. Say which environment you used.
 - **Pull raw customer records into context** when an aggregate answers the
@@ -131,6 +173,8 @@ model to match a number someone expected.
 
 Stop and ask before any write to a source system, outbound message,
 publication, credential change, production access, `--full-refresh` or backfill.
+On a snapshot-based template, `--full-refresh` after the first load discards MRR
+history that cannot be rebuilt from the source. Name that consequence.
 
 ## What billing data cannot tell you
 
@@ -144,9 +188,3 @@ publication, credential change, production access, `--full-refresh` or backfill.
 
 Say what is missing and offer the concrete next step. Do not produce an
 approximation without labelling it as one.
-
-## Reference
-
-- Stripe template: https://getbruin.com/docs/bruin/getting-started/templates-docs/stripe-bigquery-README.html
-- Semantic layer: https://getbruin.com/docs/bruin/core-concepts/semantic-layer.html
-- Quality checks: https://getbruin.com/docs/bruin/quality/overview.html

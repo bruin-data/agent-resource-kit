@@ -10,23 +10,42 @@ description: Use when a fix has merged, a transient failure needs a retry, or an
 > **Upstream documentation wins.** Where this file disagrees with the
 > [Bruin docs](https://getbruin.com/docs/bruin/overview.html) or `bruin --help`,
 > upstream is right and this file is stale. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 The most dangerous skill in the set. A backfill can overwrite good data,
 double-count rows, or saturate a source connector. The guardrails matter more
 than the speed.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI. For this skill,
+  `bruin cloud runs trigger --help` before every trigger.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `commands/cloud` for runs, reruns and backfills, `cloud/backfills` for Cloud
+  backfill limits and behaviour, `assets/materialization` for what each strategy
+  does to existing rows, `assets/interval-modifiers` for shifted windows, and
+  `commands/backfill` for how the local command differs.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
 ## Access
 
-Prefer the Bruin Cloud MCP server when it is connected. Otherwise use
-`bruin cloud ... --output json`. Never substitute a local `bruin run`, or a
-local `--full-refresh`, for a Cloud run; local execution does not reproduce
-Cloud behaviour and leaves no auditable run record.
+Either Cloud interface works. Default to `bruin cloud ... --output json`; use
+the Bruin Cloud MCP server when the host has it connected. Never substitute a
+local `bruin run`, a local `bruin backfill`, or a local `--full-refresh`, for a
+Cloud run; local execution does not reproduce Cloud behaviour and leaves no
+auditable run record.
 
-Never ask for a Bruin Cloud API key in chat, and never pass one as `--api-key`
-on a command line where it lands in shell history and the process list. Tell
-the user to run `bruin cloud login`, or to export `BRUIN_CLOUD_API_KEY`
-themselves.
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
 
 ## When to use
 
@@ -47,8 +66,8 @@ everything" with no scoped range.
 | `project_id` | no | `<your-project-id>` | Required when several projects are visible |
 | `pipeline` | yes | `daily-orders` | Cloud pipeline name |
 | `asset` | no | `marts.daily_revenue` | The asset that motivated the rerun. Drives risk analysis and verification |
-| `start` / `end` | yes | `2026-05-01T00:00:00Z` | Use the pipeline's interval format. Do not assume inclusivity beyond Cloud's own run-window semantics |
-| `reason` | yes | `schema fix for order_total` | Free text, logged with the run for audit |
+| `start` / `end` | yes | `2026-05-01T00:00:00Z` | Use the pipeline's interval format. With `--split`, `--end-date` is exclusive, so pass one period past the last one you want. See `commands/cloud` |
+| `reason` | yes | `schema fix for order_total` | Free text. Pass it as `--note` on the trigger, which shows in the Cloud activity log |
 | `mode` | no | `trigger` or `rerun` | Default `trigger`. Use `rerun` only against an existing run ID |
 | `dry_run` | no | `true` | Default `true`. Set `false` only after the plan is approved |
 
@@ -66,10 +85,11 @@ Run every one before triggering anything. A single failure aborts the plan.
 5. **Intervals are meaningful.** Some assets do not use intervals, or use them
    wrongly. If slicing is not meaningful here, escalate rather than pretend it
    is safe.
-6. **Materialisation strategy.** Classify the asset and its downstreams:
-   `append`, `merge`, `delete+insert`, `time_interval`, `create+replace`,
-   `truncate+insert`, `ddl`, `scd2_by_time`, `scd2_by_column`, and the data
-   vault strategies. If you cannot estimate the consequence, escalate.
+6. **Materialisation strategy.** Read the strategy of the asset and each
+   downstream, and classify what it does to rows already in the window: keeps
+   them and adds more, replaces them, or rebuilds the whole table.
+   `assets/materialization` is the list of strategies and what each does. If
+   you cannot estimate the consequence, escalate.
 7. **Reversibility.** Identify where the data comes from and whether deleted
    rows can be restored. If restoration is impossible, uncertain or expensive,
    a human decides.
@@ -92,30 +112,48 @@ Run every one before triggering anything. A single failure aborts the plan.
 
 ## Commands
 
-```bash
-bruin cloud runs list    --project-id <id> --pipeline <p> --limit 20 --output json
-bruin cloud runs get     --project-id <id> --pipeline <p> --latest  --output json
-bruin cloud runs diagnose --project-id <id> --pipeline <p> --latest --output json
+Take the commands and flags from `commands/cloud` (runs, backfills) and
+`bruin cloud runs trigger --help`, not from memory. Three things are fixed here
+whatever the flag set says:
 
-# Trigger an interval. --split batches the range into one run per unit,
-# which is safer than one run over the whole range.
-bruin cloud runs trigger --project-id <id> --pipeline <p> \
-  --start-date <start> --end-date <end> --split day --output json
+- Always pass `--split`, so the range runs as one child run per interval
+  rather than one run over the whole range.
+- Always set `--start-date` and `--end-date` explicitly. With `--split`, the
+  end is exclusive, `[start, end)`. The local `bruin backfill` treats a
+  date-only end as inclusive and a timestamp end as exclusive
+  (`commands/backfill`), so do not carry its dates into a Cloud trigger.
+- Always pass `--note <reason>`.
 
-# Rerun an existing run, optionally only its failed assets.
-bruin cloud runs rerun --project-id <id> --pipeline <p> \
-  --run-id <run-id> --only-failed --output json
-```
-
-Trigger and rerun return a success envelope, not a run ID. Poll
-`bruin cloud runs list --limit 1`, then verify the run you found with
-`bruin cloud runs get --run-id <id>`. `bruin cloud backfills list` and
-`backfills runs` inspect a split batch as one group.
-
-Always set `--start-date` and `--end-date` explicitly. Check `bruin cloud runs
-trigger --help` before using `--asset`, `--downstream`, `--full-refresh` or
+Check `--help` before using `--asset`, `--downstream`, `--full-refresh` or
 `--chunk-size`; the flag set moves, and `--full-refresh` in particular is never
-auto-allowed here.
+auto-allowed here. `--tag` labels the run in the activity log. It does not
+select assets; `--asset` does.
+
+Finding the run you started:
+
+- A plain trigger prints the created run ID; with `--output json` it is in
+  `run_id`. Verify it with `bruin cloud runs get --run-id <id>`.
+- A `--split` trigger prints a backfill ID and a tracking URL instead, because
+  the child runs are created asynchronously. Inspect the batch with
+  `bruin cloud backfills list` and `backfills runs --id <backfill-id>`.
+- For `runs rerun`, confirm the resulting run with `bruin cloud runs list` and
+  `runs get` before you verify anything. See Unverified below.
+
+What Cloud does that a plan must account for, per `cloud/backfills`:
+
+- A backfill holds at most 250 child runs. Plan larger ranges as several
+  batches, or a coarser split.
+- Interval modifiers are always applied to every child run in Cloud, with no
+  toggle, so child windows can overlap. Check the asset for `interval_modifiers`
+  before assuming each run touches only its own interval.
+- Cross-pipeline sensors still apply. A child run waits for its external
+  upstream interval to complete, so pre-flight 9 covers upstreams in other
+  pipelines too.
+
+The Cloud MCP `backfill-trigger` tool accepts per-asset `asset_overrides`, and
+its own schema documents `FULL_REFRESH` there as forcing a full refresh. The
+full-refresh rules in this skill cover that path exactly as they cover
+`--full-refresh`.
 
 ## Guardrails
 
@@ -159,3 +197,11 @@ verification result, and downstream assets still blocked.
 A backfill is not complete until the record is written. A partial backfill must
 say so in plain words. Then call
 [`pipeline-report`](../pipeline-report/SKILL.md).
+
+## Unverified
+
+**What `bruin cloud runs rerun` prints.** `commands/cloud` documents the
+trigger output but not the rerun output, and checking it needs a live rerun,
+which was not run for this file. Until you have seen it, find the new
+run with `bruin cloud runs list --pipeline <p> --limit 5 --output json` and
+confirm it with `runs get --run-id <id>` before verifying the interval.

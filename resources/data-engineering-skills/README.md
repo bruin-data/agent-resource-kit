@@ -6,19 +6,22 @@ recovering safely.
 > **Upstream documentation wins.** Where a skill disagrees with the
 > [Bruin docs](https://getbruin.com/docs/bruin/overview.html) or `bruin --help`,
 > upstream is right and the file here is stale. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 ## Start by installing Bruin's own skills
 
-Bruin ships seven maintained diagnosis skills with the CLI. Install them; do not
-copy them anywhere:
+Bruin ships maintained diagnosis skills with the CLI. Install them; do not copy
+them anywhere:
 
 ```bash
 bruin ai skills all
 ```
 
-[`bruin-builtin-skills`](bruin-builtin-skills/) is the pointer: what each one
-covers, and which symptom sends you to which.
+What gets installed, and where, is in
+[`commands/ai-skills`](https://getbruin.com/docs/bruin/commands/ai-skills.html)
+(`bruin_get_doc_content('commands/ai-skills')` on the local Bruin MCP server).
+[`bruin-builtin-skills`](bruin-builtin-skills/) says how to pick one and what to
+watch for, including that a re-install overwrites local edits.
 
 ## Then add the orchestration layer
 
@@ -50,6 +53,11 @@ These skills pass findings to each other by writing a YAML file into `.context/`
 and returning its path. Nothing enforces that. No tool creates the directory, no
 schema validates the file, and nothing stops a skill inventing a shape the next
 one cannot read.
+
+Bruin's built-in skills are not part of it. They return a text diagnosis and
+write no file. When one of them hands off to `maintenance-pr`, the orchestrating
+agent writes the finding file from that returned diagnosis, quoting its
+evidence, and passes the path on.
 
 It works because each skill states what it writes and what it expects to read.
 If you change one, read the others. If a file is missing or will not parse,

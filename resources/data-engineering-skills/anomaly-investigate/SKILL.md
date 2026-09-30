@@ -10,19 +10,37 @@ description: Use when a tracked metric spikes or dips but no pipeline error and 
 > **Upstream documentation wins.** Where this file disagrees with the
 > [Bruin docs](https://getbruin.com/docs/bruin/overview.html) or `bruin --help`,
 > upstream is right and this file is stale. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 The asset ran. The checks passed. The number still looks wrong. This skill
 finds out why by attribution, not by guesswork.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI. For this skill,
+  `bruin query --help` and `bruin lineage --help`.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `commands/query` for warehouse queries, `commands/lineage` for upstreams and
+  downstreams, and `commands/cloud` for runs and instances.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
 ## Access
 
-Use the Bruin Cloud MCP server or `bruin cloud ... --output json` for run and
-asset context. Local repository inspection is allowed for metric definitions,
-lineage and git history. Local operational runs are not.
+Use `bruin cloud ... --output json`, or the Bruin Cloud MCP server when the host
+has it, for run and asset context. Local repository inspection is allowed for
+metric definitions, lineage and git history. Local operational runs are not.
 
-Never ask for a credential in chat and never pass one as a command argument.
-`bruin cloud login` and `bruin connections add` are the paths.
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
 
 ## When to use
 
@@ -52,32 +70,32 @@ the CLI and install with `bruin ai skills all`.
 ## Context to gather
 
 1. **Metric history.** At least 28 days of daily values plus the window in
-   question. Use `bruin query --asset <asset-file> --query <sql> --description
-   "<why>" --output json`, and dry-run expensive scans first.
+   question, through `bruin query`.
 2. **Baseline.** Median and interquartile range over the baseline window, using
    the same day of week where seasonality matters.
 3. **Magnitude.** How many IQRs or sigmas off, *and* the absolute delta. Both
    matter: a large percentage on a tiny base is noise.
 4. **Dimension breakdowns.** The metric sliced by each candidate dimension,
-   window against baseline. Find where the anomaly concentrates. Cap these with
-   `--limit` and `--timeout`, and dry-run wide scans.
-5. **Cloud context.** `bruin cloud runs list`, `runs get`, `runs diagnose` and
-   `instances list` confirm the runs and checks for that window. "Checks
-   passed" means the run status is `success` and the asset instance is neither
-   `failed` nor `checks_failed`, depending on which response you are reading.
+   window against baseline. Find where the anomaly concentrates.
+5. **Cloud context.** The runs, their diagnosis and the asset instances for
+   that window. "Checks passed" means the run status is `success` and the asset
+   instance is neither `failed` nor `checks_failed`, depending on which
+   response you are reading.
 6. **Upstream row counts.** Did the source row count move on that date?
 7. **Upstream distributions.** Did a column's distribution shift even though
    the row count held steady?
 8. **Code changes.** `git log` and recent PRs on the metric's asset and its
    upstreams over the last 30 days.
-9. **Lineage.** `bruin lineage <asset-file> --output json --full`, with
-   `--variant` where the pipeline uses variants.
+9. **Lineage.** `bruin lineage` on the metric's asset, with the full upstream
+   and downstream set and the variant where the pipeline uses variants.
 10. **External calendar.** Holidays, launches, maintenance windows, paid
     acquisition pulses. If no calendar is available, record this as
     "not checked" rather than omitting it.
 
-Every warehouse query is read-only, carries a `--description` for the audit
-trail, and is capped. Do not bypass soft limits without explicit approval.
+Every warehouse query is read-only and carries a `--description` for the audit
+trail. Always pass `--limit`: its default is 0, which returns every row. Run
+`--dry-run` first on wide scans. Never pass `--dangerously-bypass-soft-limits`
+without explicit approval.
 
 ## Attribution patterns
 

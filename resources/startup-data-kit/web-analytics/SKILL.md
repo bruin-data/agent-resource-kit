@@ -12,7 +12,7 @@ description: Use when analysing website traffic, sessions, landing page performa
 > Search Console documentation, those are right and this file is stale. GA4
 > definitions in particular are configurable per property, so the property's
 > own settings beat any general description here. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 GA4 is the source people most often quote and least often reconcile. Sessions,
 users and conversions all mean something specific and none of them mean what the
@@ -20,14 +20,44 @@ plain English word suggests.
 
 Setup is in the `bruin-agent` skill. This assumes a project exists.
 
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `getting-started/templates-docs/google-web-analytics-README` for what the
+  template needs, builds and cannot do, `ingestion/google_analytics` for the GA4
+  API connector, and `ingestion/gsc` for the Search Console connector, its
+  tables and metrics.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
+
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
+
 ## Sources and where to start
 
-| They use | Start with |
-|---|---|
-| GA4 and Search Console, data already in BigQuery | `bruin init google-web-analytics` (staging models plus nine analytical reports) |
-| GA4 via API | `googleanalytics` connector: needs `service_account_json` and `property_id` |
-| Search Console | `gsc` connector: needs `service_account_json` and `site_url` |
-| Edge and bot traffic | `cloudflare_radar` |
+- **GA4 and Search Console exports already in BigQuery:** the
+  `google-web-analytics` template. Read its README first. It needs the GA4
+  export with streaming on, because it reads only `events_intraday_*`; without
+  streaming every GA4 model is empty, with no error. It also needs the Search
+  Console bulk data export. Neither export backfills, so history starts the day
+  each was switched on.
+- **GA4 through the API:** read `ingestion/google_analytics` for the connection
+  fields.
+- **Search Console through the API:** read `ingestion/gsc`. The service account
+  has to be added as a user on the Search Console property, and the API enabled
+  in its Google Cloud project, before anything loads.
+
+Cloudflare Radar (`ingestion/cloudflare-radar`) is Internet-wide aggregate data,
+not this site's traffic. Do not use it as a traffic or bot source.
 
 **Prefer the BigQuery export over the API where it exists.** The GA4 export
 gives event-level data with no sampling and no quota. The Reporting API applies
@@ -51,7 +81,9 @@ Do not treat a mismatch as a bug to fix. Explain it.
 - **Timezone** is the property's, which may differ from the warehouse and the
   billing system.
 
-State which surface a number came from, every time.
+State which surface a number came from, every time. On the
+`google-web-analytics` template, also read "Scope and limitations" in its
+README before quoting a number; it lists the template's own gaps.
 
 ## Definitions to pin down before reporting
 
@@ -66,7 +98,7 @@ State which surface a number came from, every time.
 
 ## Search Console is a different dataset, not a subset
 
-- **Clicks, impressions, CTR and position only.** No sessions, no conversions.
+- **No sessions, no conversions.** `ingestion/gsc` lists what it does carry.
 - **GSC clicks will not equal GA4 organic sessions.** Different measurement
   points, different filtering, different bot handling. Expect a gap and do not
   reconcile them to zero.
@@ -74,8 +106,11 @@ State which surface a number came from, every time.
   queries is not meaningful.
 - **Anonymised queries** are excluded from the query dimension but included in
   totals, so query-level rows will not sum to the total.
-- **16 months of history, maximum.** Back it up in the warehouse if longer
-  matters.
+- **Limited history.** Search Console keeps roughly 16 months. Load it into
+  the warehouse if longer matters.
+- **Recent days are missing, and past days change.** Search Console lags two to
+  three days and revises history in place. Reload a trailing window rather than
+  only appending, and leave the last three days out of any comparison.
 
 ## The join that makes it useful
 
@@ -107,9 +142,8 @@ that the join is the work, and that GA4-only answers stop at traffic.
 
 ## Never
 
-- **Ask for a credential** in chat. GA4 and GSC use service account JSON, which
-  is a private key. It should never pass through a conversation or a command
-  argument. Route through `bruin connections add` or an environment variable.
+- **Ask for a credential** in chat or as a command argument. A Google service
+  account key is a private key. See **Credentials** above.
 - **Pull URL-level data without checking for tokens.** Query strings contain
   session tokens, password reset links and personal data. Strip parameters
   before anything reaches a summary.
@@ -127,6 +161,4 @@ that the join is the work, and that GA4-only answers stop at traffic.
 
 ## Reference
 
-- Google web analytics template: https://getbruin.com/docs/bruin/getting-started/templates.html
-- Ingestr sources: https://getbruin.com/docs/ingestr/
 - Search visibility: [../ai-search-visibility/SKILL.md](../ai-search-visibility/SKILL.md)

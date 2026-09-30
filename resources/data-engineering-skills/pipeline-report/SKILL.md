@@ -10,11 +10,25 @@ description: Use when a self-healing pipeline run finishes, including a run wher
 > **Upstream documentation wins.** Where this file disagrees with the
 > [Bruin docs](https://getbruin.com/docs/bruin/overview.html) or `bruin --help`,
 > upstream is right and this file is stale. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 Every run ends here. Whether the agent did something or decided to do nothing,
 a human must be able to read one message and know what happened, what changed,
 and what still needs attention.
+
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `cloud/notifications` for team notification rules,
+  `cloud/legacy-notifications` for the `notifications:` block in pipeline files,
+  and `commands/cloud` for `notification-rules` and run lookups.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
 
 ## Unverified
 
@@ -25,11 +39,13 @@ Two things this skill assumes and cannot check for you.
 available to you, write the report to `.context/` and tell the user where it is
 rather than silently doing nothing.
 
-**`bruin cloud notification-rules` field names.** The subcommand exists, but
-reading a rule needs authentication, so the field names here were not confirmed
-against a live response. Run `bruin cloud notification-rules schema` and read the
-actual shape before relying on any field. If it differs, follow the tool and say
-so.
+**The `notification-rules list` response.** `commands/cloud` documents the rule
+shape (`name`, `enabled`, `subscriptions`, `deliveries`), and the Cloud MCP
+`notification-rule-schema` tool returned the same fields. `list` and `schema`
+need a token with the `notification-rule:list` ability. What `list` returns
+around each rule, such as IDs, was not checked against a live response. Run
+`bruin cloud notification-rules schema` and `list` and read the actual shape
+before relying on any field. If it differs, follow the tool and say so.
 
 ## Access and approval
 
@@ -40,9 +56,15 @@ integration the agent has, and it is an outbound action.
 `critical` severity.** Show the exact destination and the exact message body,
 and wait. Do not post to a destination the user has not confirmed.
 
-Use the Bruin Cloud MCP server or `bruin cloud ... --output json` when the
-report needs run IDs or asset names. Never ask for a credential in chat and
-never pass one as a command argument.
+Use `bruin cloud ... --output json`, or the Bruin Cloud MCP server when the host
+has it, when the report needs run IDs or asset names.
+
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
 
 ## Never put these in a message
 
@@ -77,10 +99,12 @@ summary, or in place of a PR review comment.
 Take the first that is available:
 
 1. The destination supplied by the calling run or agent context.
-2. The pipeline's own notification configuration. Check
-   `bruin cloud notification-rules list --output json`, and read
-   `bruin cloud notification-rules schema` for its shape before relying on any
-   field name.
+2. Notification configuration that covers this pipeline. Team-level rules
+   come from `bruin cloud notification-rules list --output json`; a rule
+   covers this pipeline if its selector matches it or it has no selector, so
+   read the selector rather than assuming. Older setups use a `notifications:` block in
+   `pipeline.yml` or on assets (`cloud/legacy-notifications`). Channels named
+   in either are configured, not inferred.
 3. An explicit `channel` from the caller.
 4. A channel ID the user has recorded in this project's own configuration.
 

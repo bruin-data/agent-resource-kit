@@ -10,33 +10,61 @@ description: Use when a diagnostic skill has produced a finding that calls for a
 > **Upstream documentation wins.** Where this file disagrees with the
 > [Bruin docs](https://getbruin.com/docs/bruin/overview.html) or `bruin --help`,
 > upstream is right and this file is stale. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-29.
+> `v0.11.765`, checked 2026-09-30.
 
 The only skill in the set with write access to the repository. Every PR it
-opens must trace back to a finding file written by another skill. No
-freelancing.
+opens must trace back to a finding file. No freelancing.
+
+Bruin's built-in diagnosis skills return a text diagnosis and write no file.
+When one of them produced the finding, the orchestrating agent writes the
+finding file into `.context/` from that returned diagnosis, quoting its
+evidence, before calling this skill. Other skills in this catalogue write their
+own.
 
 Bruin's own `maintenance-action` skill, installed with `bruin ai skills all`,
 defines what a controlled action is and asks for approval policy. This skill is
 the narrower case: turning a finding into a reviewable pull request, with an
-allow-list of change types that decides what may proceed without a human.
+allow-list of change types that decides what may proceed without a human. That
+allow-list is the kind of policy the built-in's `## Actions` placeholder asks
+the repository owner to define.
+
+## Look it up live
+
+This file says what to reach for and what to be careful about. For the facts
+themselves, ask the tool, and tell the user if it disagrees with this file:
+
+- **Flags:** `bruin <command> --help`. The docs lag the CLI. For this skill,
+  `bruin validate --help` and `bruin lineage --help`.
+- **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
+  `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
+  `commands/validate` for validation and its dry-run limits, `commands/lineage`
+  for downstream references, `assets/materialization` for what each
+  materialisation field changes, and `commands/cloud` for Cloud validation
+  errors.
+- **The user's environment:** Bruin Cloud MCP, or
+  `bruin cloud ... --output json`.
 
 ## Access
 
 Static local commands are allowed here because this skill edits repository
 files: `bruin validate <path> --output json` and `bruin lineage <asset-file>
---output json --full`. Operational local runs are not. Use the Bruin Cloud MCP
-server or `bruin cloud ... --output json` for Cloud context.
+--output json --full`. Operational local runs are not. Use
+`bruin cloud ... --output json`, or the Bruin Cloud MCP server when the host has
+it, for Cloud context.
 
-Never ask for a credential in chat and never pass one as a command argument.
-`bruin cloud login` and `bruin connections add` are the paths; environment
-variable references are the fallback.
+**Credentials.** Never ask for one in chat or pass one as a command argument.
+For a source, the user runs `bruin connections add` with no flags (the
+interactive prompt; its flag mode puts the secret on the command line) or
+references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
+exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
+which is active without printing it.
 
 ## When to use
 
-- A diagnostic skill produced a finding whose recommendation is a repository
-  change: `schema-drift-check`, `quality-check-investigate`,
-  `duplicate-investigate` or `freshness-check`.
+- A diagnosis recommends a repository change and a finding file records it.
+  The diagnosis usually comes from a built-in skill such as
+  `schema-drift-check`, `quality-check-investigate`, `duplicate-investigate` or
+  `freshness-check`, with the finding file written by the orchestrating agent.
 - A scheduled tick found an allow-listed task, such as a dependency patch bump.
 - Someone explicitly asked for a routine maintenance PR.
 
@@ -48,7 +76,7 @@ behind it. New behaviour needs a human-authored design.
 
 | Input | Required | Example | Notes |
 |---|---|---|---|
-| `finding_file` | yes | `.context/drift-raw.orders-20260522.yml` | Must exist and parse |
+| `finding_file` | yes | `.context/drift-raw.orders-20260522.yml` | Must exist and parse. Written by the orchestrating agent when the diagnosis came from a built-in skill |
 | `branch_name` | no | `self-healing/column-rename/orders-20260522` | Derived from the finding if absent. Must start with `self-healing/` |
 | `draft` | no | `true` | Default `true`. Non-trivial changes land as drafts |
 
@@ -94,7 +122,8 @@ Before creating a branch:
 8. The diff contains no credential-shaped strings. Any match aborts.
 9. Any change to materialisation strategy, `primary_key`, `update_on_merge`,
    `merge_sql` or `incremental_key` has explicit human approval, because those
-   change how Bruin writes data.
+   change how Bruin writes data. `assets/materialization` says what each field
+   does.
 
 ## PR construction
 
@@ -113,7 +142,13 @@ Verification is a checklist, and every box is a claim you must be able to
 support:
 
 - `bruin validate <path> --output json` passed, with `--variant` where it
-  applies.
+  applies. A `--fast` run skips query validation, so it is not a pass. Dry-run
+  validation (automatic on BigQuery and Snowflake) can fail for a column the
+  change adds before it exists in the destination, which is the normal state
+  for `column-add` and `column-rename`. Record that as an expected false
+  negative with the error quoted, not as a pass. Against an environment named
+  `production`, validation stops for a confirmation prompt, and `--force`
+  skips it; passing `--force` is production access, not a formality.
 - Quality checks passed, but only if Cloud state confirms it or
   `bruin run --only checks <asset-file>` was actually run. Otherwise mark them
   not executed.

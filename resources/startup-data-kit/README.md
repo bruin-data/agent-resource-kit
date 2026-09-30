@@ -3,7 +3,7 @@
 > **Upstream documentation wins.** Where a skill here disagrees with the tool's
 > own documentation or its `--help` output, upstream is right and the file here
 > is stale. Each skill states the version and date it was written against.
-> Checked 2026-09-29.
+> Checked 2026-09-30.
 
 Answering business questions from a startup's data. One resource per domain,
 because the traps are domain-specific: what ruins a revenue number is not what
@@ -11,13 +11,17 @@ ruins an attribution number.
 
 Each folder is an independent skill. Take the ones you need.
 
-| Resource | Domain | Main sources |
+| Resource | Domain | Example sources |
 |---|---|---|
 | [`revenue-analytics`](revenue-analytics/) | Finance and billing | Stripe, Chargebee, Paddle, RevenueCat, Shopify |
 | [`marketing-analytics`](marketing-analytics/) | Advertising, lifecycle, CRM | Google Ads, Meta, TikTok, LinkedIn, HubSpot, Klaviyo, Salesforce |
 | [`product-analytics`](product-analytics/) | Usage and activation | PostHog, Mixpanel, Amplitude, Firebase |
 | [`web-analytics`](web-analytics/) | Traffic and acquisition | GA4, Search Console |
 | [`ai-search-visibility`](ai-search-visibility/) | SEO, GEO, AEO | Search Console, server logs, third-party sampling tools |
+
+The sources are examples, not the supported list. Check what Bruin can ingest
+today with the local Bruin MCP server's `bruin_get_docs_tree` (the `ingestion/`
+section), and read `ingestion/<source>` before promising one.
 
 ## Start here
 

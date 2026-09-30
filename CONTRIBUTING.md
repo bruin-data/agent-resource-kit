@@ -16,8 +16,11 @@ already exists upstream:
 - **A Bruin data-source template** belongs in
   [bruin-data/bruin](https://github.com/bruin-data/bruin), where it is
   maintained alongside the CLI.
-- **A Bruin data-engineering skill** may already exist. Run `bruin ai skills all`
-  and check before writing one.
+- **A Bruin data-engineering skill** may already exist. Read
+  [`commands/ai-skills`](https://getbruin.com/docs/bruin/commands/ai-skills.html),
+  or the list `bruin ai skills` prints with no argument in a non-interactive
+  shell, before writing one. `bruin ai skills all` installs files, so do not run
+  it just to look.
 
 This repository says *which* tool to reach for and *what to be careful about*.
 Where a file starts restating upstream documentation, that is a bug in the file.
