@@ -35,11 +35,13 @@ jobs:
           fetch-depth: 0
 
       # This repository promises it carries no credentials. An off-the-shelf
-      # scanner is better maintained than anything hand-rolled here.
+      # scanner is better maintained than anything hand-rolled here. The CLI
+      # image is used directly because gitleaks-action needs a paid license
+      # key on organization repositories.
       - name: Scan for credentials
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1
+          git /repo --redact --verbose
 
   links:
     runs-on: ubuntu-latest
