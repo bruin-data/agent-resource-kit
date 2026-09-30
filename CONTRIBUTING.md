@@ -43,17 +43,23 @@ description: Use when the user is doing X, asks about Y, or needs Z. Covers ...
 ...
 ```
 
-Four rules the checker enforces:
+The rules the checker enforces:
 
 - `name` matches the folder name, so a copied folder lands correctly.
 - `description` starts with `Use when` and is 60 to 600 characters. It is a
   routing trigger, not a summary; nothing else belongs in frontmatter.
-- Every resource file opens with the upstream note, carrying the version and
-  date it was written against.
+- A `**Status:** x · **Risk:** y` line, using the labels below.
+- A resource file that drives a Bruin tool carries the upstream note, with the
+  Bruin CLI version and date it was checked against. Any other upstream note
+  carries a date. A file that drives no tool gets a one-line precedence note
+  instead, saying what wins where it disagrees; the checker does not enforce
+  that one.
 - Every resource is listed in the root `README.md` index.
+- Local links resolve, and no internal identifiers (Slack channel IDs, project
+  ULIDs, service accounts) or forbidden files (`.bruin.yml`, `.env`) appear.
 
 Push depth into sibling files referenced by relative path, so `SKILL.md` stays
-short enough to load whole. The checker warns past 1,500 words.
+short enough to load whole. The checker warns past 2,000 words.
 
 ## Choosing your labels
 
@@ -97,9 +103,9 @@ A risk level describes instructions, not a sandbox. See [`SECURITY.md`](SECURITY
 The difference between a resource someone uses twice and one they try once is
 usually what it admits.
 
-- **Say what the tool cannot do.** Every skill here has a "what this cannot tell
-  you" section, because the alternative is an agent producing a confident answer
-  to a question the data cannot answer.
+- **Say what the tool cannot do.** The analytics skills in `startup-data-kit`
+  have a "what this cannot tell you" section, because the alternative is an
+  agent producing a confident answer to a question the data cannot answer.
 - **Say what the user has to decide.** `revenue-analytics` has ten decisions it
   cannot make for you, because MRR genuinely depends on them. A resource that
   picks silently teaches the user that a hard question is settled.

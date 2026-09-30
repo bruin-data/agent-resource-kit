@@ -31,7 +31,8 @@ except ImportError:  # pragma: no cover - depends on invocation style
 
 EXIT_OK = 0
 EXIT_ERROR = 1
-EXIT_NOT_CONFIRMED = 2
+# Not 2: argparse exits 2 on a usage error, and the two must not be confused.
+EXIT_NOT_CONFIRMED = 3
 
 CONFIG_ENV = "ATTIO_CLI_CONFIG"
 CONFIG_FILENAMES = ("attio-cli.yml", "attio-cli.yaml", "attio-cli.json")
@@ -408,6 +409,16 @@ def build_parser(default_limit: int) -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
+    # --format is accepted after the subcommand too. SUPPRESS keeps the
+    # top-level value unless it is given again here.
+    fmt = argparse.ArgumentParser(add_help=False)
+    fmt.add_argument(
+        "--format", choices=("json", "table"), default=argparse.SUPPRESS, help="output format (default: json)"
+    )
+
+    def add(name: str, **kwargs: Any) -> argparse.ArgumentParser:
+        return sub.add_parser(name, parents=[fmt], **kwargs)
+
     def add_write_flag(p: argparse.ArgumentParser) -> None:
         p.add_argument(
             "--yes",
@@ -416,23 +427,23 @@ def build_parser(default_limit: int) -> argparse.ArgumentParser:
         )
 
     # -- reads
-    p = sub.add_parser("objects", help="list the objects in the workspace")
+    p = add("objects", help="list the objects in the workspace")
     p.set_defaults(func=cmd_objects)
 
-    p = sub.add_parser("attrs", help="list attribute definitions for an object")
+    p = add("attrs", help="list attribute definitions for an object")
     p.add_argument("object", help="object slug or config alias")
     p.add_argument("--limit", type=int, default=100)
     p.set_defaults(func=cmd_attrs)
 
-    p = sub.add_parser("lists", help="list the lists in the workspace")
+    p = add("lists", help="list the lists in the workspace")
     p.add_argument("--limit", type=int, default=100)
     p.set_defaults(func=cmd_lists)
 
-    p = sub.add_parser("list-attrs", help="list attribute definitions for a list")
+    p = add("list-attrs", help="list attribute definitions for a list")
     p.add_argument("list", help="list slug or config alias")
     p.set_defaults(func=cmd_list_attrs)
 
-    p = sub.add_parser("search", help="substring search on one attribute")
+    p = add("search", help="substring search on one attribute")
     p.add_argument("object", help="object slug or config alias")
     p.add_argument("query")
     p.add_argument("--attribute", help="attribute to match on (default: from config, else 'name')")
@@ -440,7 +451,7 @@ def build_parser(default_limit: int) -> argparse.ArgumentParser:
     p.add_argument("--offset", type=int, default=0)
     p.set_defaults(func=cmd_search)
 
-    p = sub.add_parser("query", help="query records with an Attio filter")
+    p = add("query", help="query records with an Attio filter")
     p.add_argument("object", help="object slug or config alias")
     p.add_argument("-f", "--filter", help="filter JSON, e.g. '{\"name\":{\"$contains\":\"acme\"}}'")
     p.add_argument("-s", "--sort", help="sorts JSON")
@@ -450,12 +461,12 @@ def build_parser(default_limit: int) -> argparse.ArgumentParser:
     p.add_argument("--max", type=int, default=1000, help="cap for --all (default: 1000)")
     p.set_defaults(func=cmd_query)
 
-    p = sub.add_parser("get", help="fetch one record by id")
+    p = add("get", help="fetch one record by id")
     p.add_argument("object", help="object slug or config alias")
     p.add_argument("record_id")
     p.set_defaults(func=cmd_get)
 
-    p = sub.add_parser("entries", help="query entries in a list")
+    p = add("entries", help="query entries in a list")
     p.add_argument("list", help="list slug or config alias")
     p.add_argument("-f", "--filter", help="filter JSON")
     p.add_argument("-s", "--sort", help="sorts JSON")
@@ -464,40 +475,40 @@ def build_parser(default_limit: int) -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_entries)
 
     # -- writes, all gated behind --yes
-    p = sub.add_parser("create", help="create a record (WRITE)")
+    p = add("create", help="create a record (WRITE)")
     p.add_argument("object")
     p.add_argument("values", help="attribute values as JSON")
     add_write_flag(p)
     p.set_defaults(func=cmd_create)
 
-    p = sub.add_parser("update", help="overwrite attributes on a record (WRITE)")
+    p = add("update", help="overwrite attributes on a record (WRITE)")
     p.add_argument("object")
     p.add_argument("record_id")
     p.add_argument("values", help="attribute values as JSON")
     add_write_flag(p)
     p.set_defaults(func=cmd_update)
 
-    p = sub.add_parser("upsert", help="create or update, matched on an attribute (WRITE)")
+    p = add("upsert", help="create or update, matched on an attribute (WRITE)")
     p.add_argument("object")
     p.add_argument("matching_attribute", help="unique attribute slug to match on")
     p.add_argument("values", help="attribute values as JSON")
     add_write_flag(p)
     p.set_defaults(func=cmd_upsert)
 
-    p = sub.add_parser("delete", help="delete a record, irreversibly (WRITE)")
+    p = add("delete", help="delete a record, irreversibly (WRITE)")
     p.add_argument("object")
     p.add_argument("record_id")
     add_write_flag(p)
     p.set_defaults(func=cmd_delete)
 
-    p = sub.add_parser("update-entry", help="overwrite values on a list entry (WRITE)")
+    p = add("update-entry", help="overwrite values on a list entry (WRITE)")
     p.add_argument("list")
     p.add_argument("entry_id")
     p.add_argument("values", help="entry values as JSON")
     add_write_flag(p)
     p.set_defaults(func=cmd_update_entry)
 
-    p = sub.add_parser("add-to-list", help="add an existing record to a list (WRITE)")
+    p = add("add-to-list", help="add an existing record to a list (WRITE)")
     p.add_argument("list")
     p.add_argument("object", help="object slug or alias the record belongs to")
     p.add_argument("record_id")
@@ -505,7 +516,7 @@ def build_parser(default_limit: int) -> argparse.ArgumentParser:
     add_write_flag(p)
     p.set_defaults(func=cmd_add_to_list)
 
-    p = sub.add_parser("delete-entry", help="remove an entry from a list (WRITE)")
+    p = add("delete-entry", help="remove an entry from a list (WRITE)")
     p.add_argument("list")
     p.add_argument("entry_id")
     add_write_flag(p)

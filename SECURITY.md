@@ -37,8 +37,9 @@ is worth reporting.
 
 **It contains no credentials and no real business data.**
 
-Every resource is instructions and links. There is no data, synthetic or
-otherwise, and no runnable pipeline.
+Every resource is instructions, links and, in some cases, sample scripts you
+run yourself. There is no data, synthetic or otherwise, and no deployed
+pipeline.
 
 Two checks run on every change: `tests/check.py` blocks filenames that must
 never be committed (`.bruin.yml`, `.env`, `credentials.json`,
@@ -73,7 +74,7 @@ they access it.
 
 ## What a risk level means
 
-`risk_level` describes the worst thing a resource can do **when followed as
+The `**Risk:**` label describes the worst thing a resource can do **when followed as
 written**. It is a property of the instructions, not a sandbox.
 
 **An agent that ignores its instructions is not stopped by more instructions.**

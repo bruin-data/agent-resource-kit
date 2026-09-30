@@ -118,7 +118,8 @@ python3 scripts/cli.py add-to-list <list> companies <record-id> -v '{"stage":"Le
 python3 scripts/cli.py delete-entry <list> <entry-id>
 ```
 
-Exit codes: `0` success, `1` error, `2` a write that was not confirmed.
+Exit codes: `0` success, `1` error, `2` a usage error (bad arguments), `3` a write
+that was not confirmed.
 
 Using the client from Python:
 

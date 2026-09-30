@@ -108,8 +108,8 @@ class Config:
         value = self.defaults.get("cache_path")
         return value if isinstance(value, str) and value.strip() else None
 
-    def max_age_days(self, fallback: float) -> float:
-        value = self.defaults.get("max_age_days")
+    def max_age_days(self, fallback: float, key: str = "max_age_days") -> float:
+        value = self.defaults.get(key)
         try:
             return float(value) if value is not None else fallback
         except (TypeError, ValueError):
@@ -934,8 +934,11 @@ def build_parser(cfg: Config) -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     def common(
-        p: argparse.ArgumentParser, default_age: float = DEFAULT_MAX_AGE_DAYS
+        p: argparse.ArgumentParser,
+        default_age: float = DEFAULT_MAX_AGE_DAYS,
+        age_key: str = "max_age_days",
     ) -> None:
+        max_age = cfg.max_age_days(default_age, age_key)
         p.add_argument(
             "--yes",
             action="store_true",
@@ -947,8 +950,8 @@ def build_parser(cfg: Config) -> argparse.ArgumentParser:
         p.add_argument(
             "--max-age-days",
             type=float,
-            default=cfg.max_age_days(default_age),
-            help=f"reuse cached rows this recent (default {default_age})",
+            default=max_age,
+            help=f"reuse cached rows this recent (default {max_age:g})",
         )
         p.add_argument(
             "--no-cache",
@@ -1075,7 +1078,7 @@ def build_parser(cfg: Config) -> argparse.ArgumentParser:
     )
     p.add_argument("--limit", type=int, default=100, help="max 100 per page")
     p.add_argument("--total-posts", type=int, default=0)
-    common(p, default_age=DEFAULT_POST_MAX_AGE_DAYS)
+    common(p, default_age=DEFAULT_POST_MAX_AGE_DAYS, age_key="post_max_age_days")
     p.set_defaults(func=cmd_profile_posts)
 
     p = sub.add_parser("job-search", help="find job postings by keyword")

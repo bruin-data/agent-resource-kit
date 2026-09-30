@@ -26,71 +26,74 @@ saying there as much as in an issue.
 
 **Setup**
 
-| Resource | Status | Use it when |
-|---|---|---|
-| [`bruin-agent`](resources/bruin-agent/) | experimental | Installing the Bruin CLI, creating a project, choosing a template, connecting a source, registering the Bruin MCP server, installing Bruin's agent skills |
+| Resource | Status | Risk | Use it when |
+|---|---|---|---|
+| [`bruin-agent`](resources/bruin-agent/) | experimental | read-only | Installing the Bruin CLI, creating a project, choosing a template, connecting a source, registering the Bruin MCP server, installing Bruin's agent skills |
 
 **[`startup-data-kit`](resources/startup-data-kit/)**: answering business
 questions from a startup's data, one domain per folder:
 
-| Resource | Status | Use it when |
-|---|---|---|
-| [`revenue-analytics`](resources/startup-data-kit/revenue-analytics/) | experimental | MRR, churn, expansion, failed payments, cash collection. Stripe, Chargebee, Paddle |
-| [`marketing-analytics`](resources/startup-data-kit/marketing-analytics/) | experimental | CAC, ROAS, attribution, campaigns, CRM pipeline. Google Ads, Meta, HubSpot, Klaviyo |
-| [`product-analytics`](resources/startup-data-kit/product-analytics/) | experimental | Activation, feature adoption, retention, usage-based churn signals. PostHog, Mixpanel, Amplitude |
-| [`web-analytics`](resources/startup-data-kit/web-analytics/) | experimental | Traffic, landing pages, channels, funnel drop-off. GA4, Search Console |
-| [`ai-search-visibility`](resources/startup-data-kit/ai-search-visibility/) | experimental | SEO, GEO and AEO. Search Console, AI crawler traffic, whether assistants mention you |
-
-Everything is `experimental` today: the commands in `bruin-agent` were verified
-against a live Bruin CLI, and the connector and template lists came from Bruin's
-own tooling, but nobody other than the author has used any of these end to end.
-A resource becomes `stable` when someone else has. Every resource also carries a
-risk level, `read-only` throughout so far; [`SECURITY.md`](SECURITY.md) explains
-what that does and does not mean.
+| Resource | Status | Risk | Use it when |
+|---|---|---|---|
+| [`revenue-analytics`](resources/startup-data-kit/revenue-analytics/) | experimental | read-only | MRR, churn, expansion, failed payments, cash collection. Stripe, Chargebee, Paddle |
+| [`marketing-analytics`](resources/startup-data-kit/marketing-analytics/) | experimental | read-only | CAC, ROAS, attribution, campaigns, CRM pipeline. Google Ads, Meta, HubSpot, Klaviyo |
+| [`product-analytics`](resources/startup-data-kit/product-analytics/) | experimental | read-only | Activation, feature adoption, retention, usage-based churn signals. PostHog, Mixpanel, Amplitude |
+| [`web-analytics`](resources/startup-data-kit/web-analytics/) | experimental | read-only | Traffic, landing pages, channels, funnel drop-off. GA4, Search Console |
+| [`ai-search-visibility`](resources/startup-data-kit/ai-search-visibility/) | experimental | read-only | SEO, GEO and AEO. Search Console, AI crawler traffic, whether assistants mention you |
 
 **[`data-engineering-skills`](resources/data-engineering-skills/)**: keeping
 pipelines healthy. Install Bruin's seven maintained skills, then add the
 orchestration layer they do not ship:
 
-| Resource | Status | Use it when |
-|---|---|---|
-| [`bruin-builtin-skills`](resources/data-engineering-skills/bruin-builtin-skills/) | experimental | Working out which maintained Bruin skill to install and reach for |
-| [`pipeline-triage`](resources/data-engineering-skills/pipeline-triage/) | experimental | Something broke and you need to work out what, and route it |
-| [`anomaly-investigate`](resources/data-engineering-skills/anomaly-investigate/) | experimental | A metric moved but nothing failed |
-| [`maintenance-pr`](resources/data-engineering-skills/maintenance-pr/) | experimental | Turning a proposed fix into a reviewed pull request |
-| [`pipeline-backfill`](resources/data-engineering-skills/pipeline-backfill/) | experimental | Rerunning a date range safely after a fix |
-| [`pipeline-report`](resources/data-engineering-skills/pipeline-report/) | experimental | Telling a human what happened |
+| Resource | Status | Risk | Use it when |
+|---|---|---|---|
+| [`bruin-builtin-skills`](resources/data-engineering-skills/bruin-builtin-skills/) | experimental | read-only | Working out which maintained Bruin skill to install and reach for |
+| [`pipeline-triage`](resources/data-engineering-skills/pipeline-triage/) | experimental | read-only | Something broke and you need to work out what, and route it |
+| [`anomaly-investigate`](resources/data-engineering-skills/anomaly-investigate/) | experimental | read-only | A metric moved but nothing failed |
+| [`maintenance-pr`](resources/data-engineering-skills/maintenance-pr/) | experimental | approval-required | Turning a proposed fix into a reviewed pull request |
+| [`pipeline-backfill`](resources/data-engineering-skills/pipeline-backfill/) | experimental | approval-required | Rerunning a date range safely after a fix |
+| [`pipeline-report`](resources/data-engineering-skills/pipeline-report/) | experimental | approval-required | Telling a human what happened |
 
 **[`coding-agent-workflows`](resources/coding-agent-workflows/)**: repeatable
 work on a codebase.
 
-| Resource | Status | Use it when |
-|---|---|---|
-| [`ultra-review`](resources/coding-agent-workflows/ultra-review/) | experimental | You want a deliberately harsh maintainability review of a branch |
-| [`generate-changelog`](resources/coding-agent-workflows/generate-changelog/) | experimental | You need customer-facing release notes from git history |
-| [`record-terminal-demo`](resources/coding-agent-workflows/record-terminal-demo/) | experimental | You need a terminal demo of a CLI recorded with VHS, rendered and visually checked |
+| Resource | Status | Risk | Use it when |
+|---|---|---|---|
+| [`ultra-review`](resources/coding-agent-workflows/ultra-review/) | experimental | read-only | You want a deliberately harsh maintainability review of a branch |
+| [`generate-changelog`](resources/coding-agent-workflows/generate-changelog/) | experimental | read-only | You need customer-facing release notes from git history |
+| [`record-terminal-demo`](resources/coding-agent-workflows/record-terminal-demo/) | experimental | approval-required | You need a terminal demo of a CLI recorded with VHS, rendered and visually checked |
 
 **[`tools`](resources/tools/)**: sample scripts an agent can shell out to. These
 ship code you run yourself, with your own credentials.
 
-| Resource | Status | Use it when |
-|---|---|---|
-| [`attio-cli`](resources/tools/attio-cli/) | experimental | Reading or updating records, lists and attributes in an Attio CRM |
-| [`blog-image-generator`](resources/tools/blog-image-generator/) | experimental | Finding a licence-friendly Unsplash photo and turning it into a cropped, treated cover image |
-| [`linkedin-enrichment`](resources/tools/linkedin-enrichment/) | experimental | Pulling public LinkedIn company, person, post or job data through paid Apify actors |
+| Resource | Status | Risk | Use it when |
+|---|---|---|---|
+| [`attio-cli`](resources/tools/attio-cli/) | experimental | approval-required | Reading or updating records, lists and attributes in an Attio CRM |
+| [`blog-image-generator`](resources/tools/blog-image-generator/) | experimental | approval-required | Finding a licence-friendly Unsplash photo and turning it into a cropped, treated cover image |
+| [`linkedin-enrichment`](resources/tools/linkedin-enrichment/) | experimental | approval-required | Pulling public LinkedIn company, person, post or job data through paid Apify actors |
 
 **[`prompts`](resources/prompts/)**: working methods for an agent helping with
 writing and thinking, where no tool is involved.
 
-| Resource | Status | Use it when |
-|---|---|---|
-| [`staged-writing`](resources/prompts/staged-writing/) | experimental | You want to write the prose yourself and have an agent outline, proofread, fact-check and tighten it around you |
+| Resource | Status | Risk | Use it when |
+|---|---|---|---|
+| [`staged-writing`](resources/prompts/staged-writing/) | experimental | read-only | You want to write the prose yourself and have an agent outline, proofread, fact-check and tighten it around you |
 
 **[`templates`](resources/templates/)**: starting points you fill in.
 
-| Resource | Status | Use it when |
-|---|---|---|
-| [`autonomy-policy`](resources/templates/autonomy-policy/) | experimental | Deciding what an agent may do on its own, and writing the `AGENTS.md` section that records it |
+| Resource | Status | Risk | Use it when |
+|---|---|---|---|
+| [`autonomy-policy`](resources/templates/autonomy-policy/) | experimental | read-only | Deciding what an agent may do on its own, and writing the `AGENTS.md` section that records it |
+
+Everything is `experimental` today: the commands in `bruin-agent` were verified
+against a live Bruin CLI, and the connector and template lists came from Bruin's
+own tooling, but nobody other than the author has used any of these end to end.
+A resource becomes `stable` when someone else has.
+
+**Risk** is the worst a resource can do when followed as written. `read-only`
+reads and produces local files. `approval-required` can write, run or send
+something, and every such action is gated on your explicit approval. [`SECURITY.md`](SECURITY.md) explains what the labels do
+and do not guarantee.
 
 ## Use it
 

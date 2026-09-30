@@ -13,9 +13,12 @@
 
 defaults:
   # Reuse a cached row this recent instead of paying for another actor run.
-  # Overridden per command by --max-age-days. Post history defaults to 3 days
-  # instead, because engagement counts move hourly.
+  # Overridden per command by --max-age-days.
   max_age_days: 30
+
+  # The same, for profile-posts only. Shorter, because post engagement counts
+  # move hourly. max_age_days above does not apply to post history.
+  post_max_age_days: 3
 
   # Where the local SQLite cache lives. Gitignore it: it holds personal data.
   # LINKEDIN_CACHE_PATH overrides this, and --cache-path overrides both.

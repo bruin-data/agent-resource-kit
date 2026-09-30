@@ -136,18 +136,20 @@ def uses_bruin_tool(text: str) -> bool:
 def check_upstream_note(path: pathlib.Path) -> None:
     text = path.read_text(encoding="utf-8")
     has_note = "Upstream documentation wins" in text
+    drives_bruin = uses_bruin_tool(text)
 
-    if uses_bruin_tool(text):
-        if not has_note:
-            err(path, "drives a Bruin tool, so it needs the 'Upstream "
-                      "documentation wins' note with a version and date")
+    if drives_bruin and not has_note:
+        err(path, "drives a Bruin tool, so it needs the 'Upstream "
+                  "documentation wins' note with a version and date")
         return
 
     # Not a Bruin resource. The note is not required, and carrying a Bruin-docs
     # note here would point a reader at documentation that does not govern it.
-    if has_note and "getbruin.com" in text:
+    if not drives_bruin and has_note and "getbruin.com" in text:
         err(path, "has a Bruin upstream note but does not drive a Bruin tool")
-    m = re.search(r"checked (\d{4}-\d{2}-\d{2})", text, re.IGNORECASE)
+
+    # The date may wrap onto the next line of a blockquote.
+    m = re.search(r"checked\s+(?:>\s*)?(\d{4}-\d{2}-\d{2})", text, re.IGNORECASE)
     if not m:
         # A note without a date can never go stale, which defeats the point of
         # having it. If a file must defer to upstream, it must say when it last
@@ -156,6 +158,9 @@ def check_upstream_note(path: pathlib.Path) -> None:
             err(path, "has an upstream note but no 'checked YYYY-MM-DD' date, "
                       "so it can never be reported as stale")
         return
+    if drives_bruin and not re.search(r"\bv\d+\.\d+\.\d+\b", text):
+        err(path, "drives a Bruin tool, so its upstream note needs the Bruin "
+                  "CLI version it was checked against, e.g. `v0.11.765`")
     checked = datetime.date.fromisoformat(m.group(1))
     today = datetime.date.today()
     if checked > today:

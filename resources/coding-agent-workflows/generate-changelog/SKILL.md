@@ -16,6 +16,10 @@ Generate a customer-facing changelog by analyzing all git repositories in the cu
 - **Time period**: Use `$ARGUMENTS` if provided, otherwise default to the past 2 weeks.
 - **Repos**: All subdirectories in the current working directory that are git repositories.
 
+`$ARGUMENTS` and the per-repo subagents in step 3 are Claude Code features. In
+another agent, ask the user for the time period and analyse the repos one at a
+time.
+
 ## Steps
 
 ### 1. Discover repos
@@ -40,7 +44,7 @@ Launch a separate Agent (subagent_type: general-purpose) for **each repo** to an
 Combine findings from all repos into a single, polished markdown changelog. Structure it as:
 
 ```markdown
-# Changelog — <start date> to <end date>
+# Changelog: <start date> to <end date>
 
 ## <Component or repo name>
 - **Feature 1**: Description of the feature.

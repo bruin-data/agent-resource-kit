@@ -5,7 +5,8 @@ recovering safely.
 
 > **Upstream documentation wins.** Where a skill disagrees with the
 > [Bruin docs](https://getbruin.com/docs/bruin/overview.html) or `bruin --help`,
-> upstream is right and the file here is stale. Checked 2026-09-29.
+> upstream is right and the file here is stale. Written against Bruin CLI
+> `v0.11.765`, checked 2026-09-29.
 
 ## Start by installing Bruin's own skills
 

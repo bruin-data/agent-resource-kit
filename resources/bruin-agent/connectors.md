@@ -5,7 +5,7 @@
 > `bruin init --help` for the live template list and check the [Bruin
 > docs](https://getbruin.com/docs/bruin/getting-started/templates.html) before
 > relying on an entry. Written against Bruin CLI `v0.11.765`, checked
-> 2026-09-23.
+> 2026-09-30.
 
 Grouped by what someone is trying to answer. `bruin connections list` shows
 what a project already has configured; the MCP `connection-types` tool lists
@@ -38,15 +38,21 @@ supported; the modelling is yours to write. Prefer a template where one exists.
 | `demo-snowflake-salesforce` | Snowflake | Relationship and marketing analytics |
 | `demo-payments-clickhouse` | ClickHouse | CDC and rollups |
 | `bronze-silver-postgres` | Postgres | Curated silver models with quality checks |
+| `oracle-duckdb` | DuckDB | Copies Oracle tables in with ingestr, plus a curated aggregate |
+| `bruin-cloud` | DuckDB | Bruin Cloud pipeline and asset metadata, with a per-pipeline summary. Needs a Bruin Cloud API token |
 
-**Credential-free, for learning or a demo:** `duckdb`, `duckdb-example`,
-`duckdb-lineage`, `chess`, `frankfurter`, `nyc-taxi`, `iceberg-sqlite-local`,
+**Credential-free, for learning or a demo:** `default` (what `bruin init` uses
+with no template name), `duckdb`, `duckdb-example`, `duckdb-lineage`, `chess`,
+`frankfurter`, `nyc-taxi`, `zoomcamp` (a full NYC taxi tutorial),
+`variant-example` (pipeline variables and variants), `iceberg-sqlite-local`,
 `python`, `r`, `bootstrap`, `empty`, `demo-self-heal-pipeline`, and the
 `academy-sql-*` series.
 
-**Warehouse starters:** `bigquery`, `snowflake`, `databricks`, `clickhouse`,
-`redshift`, `athena`, `postgres`-based, plus five `iceberg-*` catalog and
-storage combinations.
+**Warehouse starters:** `bigquery`, `databricks`, `clickhouse`, `redshift`,
+`athena`, plus four `iceberg-*` catalog and storage combinations
+(`iceberg-glue-s3`, `iceberg-hadoop-gcsinterop`, `iceberg-postgres-gcs`,
+`iceberg-rest-minio`). There is no generic `snowflake` starter; the Snowflake
+templates are the `demo-snowflake-*` pair above.
 
 ## Sources by domain
 

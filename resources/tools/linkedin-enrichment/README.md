@@ -156,6 +156,7 @@ vanity slug changes when LinkedIn renames it.
   records would be fetched before you commit to it.
 - **Cached reads are free** and need no token at all. The default cache life is
   30 days, or 3 days for post history, whose engagement counts move hourly.
+  `max_age_days` and `post_max_age_days` in the config file change them.
 - **Actors are priced by their authors**, usually per result or per compute
   unit, on top of your Apify plan. Check the actor's page on the Apify Store
   for its current price; this file deliberately quotes no numbers, because they

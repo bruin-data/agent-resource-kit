@@ -139,10 +139,14 @@ enough to load whole; push depth into sibling files referenced by relative path.
 Write the body as instructions to an agent.
 
 A resource that drives a Bruin tool opens with the "Upstream documentation wins"
-note, carrying the version and date it was checked against. Keep that current
-when you touch the file. A resource that drives no Bruin tool does not carry that
-note; give it a one-line as-is marker instead. The checker enforces both
-directions.
+note, carrying the Bruin CLI version and the date it was checked against. Keep
+that current when you touch the file. A resource that drives another tool (Attio,
+Apify) carries the same note pointing at that tool's documentation, with a date.
+A resource that drives no tool does not carry the note; give it a one-line
+precedence note instead, saying what wins where it disagrees (the tool's own
+documentation, or the user's conventions). The checker requires the note, a
+version and a date on Bruin-driving files, a date on every other note, and
+rejects a Bruin-docs note on a file that drives no Bruin tool.
 
 **Verify before documenting.** Run the command and use what it printed. Link to
 upstream documentation instead of restating it.
