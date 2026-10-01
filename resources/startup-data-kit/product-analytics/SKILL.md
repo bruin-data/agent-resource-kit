@@ -36,6 +36,9 @@ RevenueCat and Adapty have connectors and no template: read
 - `posthog-bigquery` account reports and retention cohorts are empty unless the product sets person properties with `identify`; those are current state, so today's plan is carried onto past months.
 - `firebase` models a Firebase Analytics export already in BigQuery; there is no Firebase connector, so the export must be switched on first.
 
+> **Note:** backfill `posthog-bigquery` events one day per run. A wider window
+> silently returns partial data. The README has the loop.
+
 **Usually needs the user's input:**
 
 - Identity: which ID ties a product user to a billing customer, and whether it exists on both sides; if none, the fix is in the product.

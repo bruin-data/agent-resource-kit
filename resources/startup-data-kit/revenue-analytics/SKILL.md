@@ -36,6 +36,10 @@ no template, read `ingestion/<source>`; the modelling is theirs to build.
 - `ecommerce` always includes Shopify; it is not a way to combine billing systems.
 - Stripe and Chargebee MRR comes from daily snapshots: Stripe history starts at the first run and cannot be backfilled; Chargebee backfills subscription episodes but not repricing.
 
+> **Note:** `stripe-bigquery` loads incrementally on Stripe's `created`
+> timestamp. A cancellation, upgrade, payment or void after the creation window
+> is missed until a wider re-run. Check the README's incremental-loading section.
+
 **Usually needs the user's input:**
 
 - Annual and multi-year plans: spread across the term, not booked in the month billed.
