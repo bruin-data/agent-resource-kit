@@ -60,6 +60,9 @@ The rules the checker enforces:
 - Every resource is listed in the root `README.md` index.
 - Local links resolve, and no internal identifiers (Slack channel IDs, project
   ULIDs, service accounts) or forbidden files (`.bruin.yml`, `.env`) appear.
+- Files shared across a group of skills stay identical. Every
+  `startup-data-kit` skill carries the same `workflow.md`; change one copy and
+  copy it to the rest.
 
 Push depth into sibling files referenced by relative path, so `SKILL.md` stays
 short enough to load whole. The checker warns past 2,000 words.

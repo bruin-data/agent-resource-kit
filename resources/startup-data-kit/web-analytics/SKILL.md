@@ -1,24 +1,27 @@
 ---
 name: web-analytics
-description: Use when analysing website traffic, sessions, landing page performance, acquisition channels, conversion rates or funnel drop-off from Google Analytics 4 or Google Search Console, and when joining web traffic to signups and revenue.
+description: Use when a startup wants web analytics set up or answered. Walks the user through installing Bruin, turning on the GA4 and Search Console exports to BigQuery, and choosing and customising the google-web-analytics template or GA4 and Search Console ingestion to their site, then answers traffic, landing page, channel, conversion and funnel questions from it, including joins to signups and revenue.
 ---
 
 # Web analytics
 
-**Status:** experimental · **Risk:** read-only
+**Status:** experimental · **Risk:** approval-required
 
 > **Upstream documentation wins.** Where this file disagrees with the [Bruin
-> docs](https://getbruin.com/docs/bruin/overview.html) or with Google's GA4 and
-> Search Console documentation, those are right and this file is stale. GA4
-> definitions in particular are configurable per property, so the property's
-> own settings beat any general description here. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-30.
+> docs](https://getbruin.com/docs/bruin/overview.html), `bruin --help`, or
+> Google's GA4 and Search Console documentation, those are right and this file
+> is stale. GA4 definitions in particular are configurable per property, so the
+> property's own settings beat any general description here. Written against
+> Bruin CLI `v0.11.765`, checked 2026-10-01.
 
-GA4 is the source people most often quote and least often reconcile. Sessions,
-users and conversions all mean something specific and none of them mean what the
-plain English word suggests.
+Two jobs. **Set up:** work with the user to install a maintained Bruin web
+analytics template and customise it to their site and property. **Answer:**
+questions from what it built, in [analysis.md](analysis.md).
 
-Setup is in the `bruin-agent` skill. This assumes a project exists.
+GA4 is the source people most often quote and least often reconcile. Most of the
+damage is done during setup: a key event that is never sent, a subdomain left
+out, a property timezone nobody checked. Each one fails silently, as an empty
+column or a quietly wrong total.
 
 ## Look it up live
 
@@ -30,31 +33,43 @@ themselves, ask the tool, and tell the user if it disagrees with this file:
   `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
   `getting-started/templates-docs/google-web-analytics-README` for what the
   template needs, builds and cannot do, `ingestion/google_analytics` for the GA4
-  API connector, and `ingestion/gsc` for the Search Console connector, its
-  tables and metrics.
+  API connector, `ingestion/gsc` for the Search Console connector, its tables
+  and metrics, and `platforms/bigquery` for the warehouse connection.
 - **The user's environment:** Bruin Cloud MCP, or
   `bruin cloud ... --output json`.
 
-**Credentials.** Never ask for one in chat or pass one as a command argument.
-For a source, the user runs `bruin connections add` with no flags (the
-interactive prompt; its flag mode puts the secret on the command line) or
-references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
-exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
-which is active without printing it.
+## Setting it up
 
-## Sources and where to start
+Follow [workflow.md](workflow.md) from the top: install, MCP, repository,
+warehouse, template, credentials, then the questions. It is the same process
+for every skill in this kit. What is specific to web analytics is below.
 
-- **GA4 and Search Console exports already in BigQuery:** the
-  `google-web-analytics` template. Read its README first. It needs the GA4
-  export with streaming on, because it reads only `events_intraday_*`; without
-  streaming every GA4 model is empty, with no error. It also needs the Search
-  Console bulk data export. Neither export backfills, so history starts the day
-  each was switched on.
-- **GA4 through the API:** read `ingestion/google_analytics` for the connection
-  fields.
-- **Search Console through the API:** read `ingestion/gsc`. The service account
-  has to be added as a user on the Search Console property, and the API enabled
-  in its Google Cloud project, before anything loads.
+> **Important: do not ask a fixed list of questions.** Read the template as it
+> is today and work out which of its choices this user needs to confirm.
+> Templates change, so the questions change with them. Workflow step 7 says how.
+
+### Templates to consider
+
+Ask which sites they track, whether they use GA4 and Search Console, and
+whether either already exports to BigQuery. Then check `bruin init --help`; at
+the time of writing the one candidate was `google-web-analytics`.
+
+Caveats to raise before recommending it:
+
+- **It ingests nothing.** It reads the GA4 BigQuery export and the Search
+  Console bulk data export where they already land, so it needs BigQuery and
+  both exports running.
+- **It reads only `events_intraday_*`.** That needs the GA4 export with
+  streaming on. Without streaming every GA4 model is empty, with no error. The
+  README has a query that checks which tables the property produces. Run it
+  before the first run.
+- **Neither export backfills.** History starts the day each was switched on.
+- **Its first run is a `--full-refresh`,** per the README, and changing its
+  brand or path patterns later means rebuilding staging the same way. Name
+  that when you ask.
+- **Not on BigQuery, or no exports:** there is no template. Ingest through
+  `ingestion/google_analytics` and `ingestion/gsc` into their warehouse, and
+  agree with the user that the modelling is theirs to build.
 
 Cloudflare Radar (`ingestion/cloudflare-radar`) is Internet-wide aggregate data,
 not this site's traffic. Do not use it as a traffic or bot source.
@@ -64,101 +79,93 @@ gives event-level data with no sampling and no quota. The Reporting API applies
 sampling on large properties, enforces quotas, and applies thresholding that
 silently drops rows. If someone has the export, use it and say why.
 
-## GA4 numbers will not match, and that is normal
+### Steps only the user can do
 
-Do not treat a mismatch as a bug to fix. Explain it.
+These happen in Google's consoles, not in Bruin. Give the exact steps, using
+the Google instructions the README and `ingestion/<source>` pages link to, then
+wait until the user says each is done.
 
-- **The API and the BigQuery export disagree.** Different processing, different
-  attribution, different session definitions. Both are "GA4".
-- **GA4 sessions differ from Universal Analytics sessions.** Any year-over-year
-  comparison crossing the migration is comparing two different metrics.
-- **Consent mode and ad blockers** mean GA4 undercounts, by a share that varies
-  by audience. A technical B2B audience blocks far more than a consumer one.
-- **Thresholding** suppresses rows with small counts when Google Signals is on.
-  Totals will not equal the sum of a breakdown.
-- **Sampling** applies to large API queries. Check whether a response was
-  sampled before quoting it.
-- **Timezone** is the property's, which may differ from the warehouse and the
-  billing system.
+- **Turn on the exports:** the GA4 BigQuery link with streaming, and the Search
+  Console bulk data export.
+- **Grant access:** the BigQuery connection's credentials need read on both
+  export datasets and write on the datasets the pipeline creates. If an export
+  lives in another project, grant read there too.
+- **On the API route:** add the service account as a user on the Search Console
+  property, and enable the Search Console API in its Google Cloud project.
 
-State which surface a number came from, every time. On the
-`google-web-analytics` template, also read "Scope and limitations" in its
-README before quoting a number; it lists the template's own gaps.
+If the exports were only just switched on, say that there is nothing to report
+on yet. Check that the export tables exist and hold rows before the first run.
 
-## Definitions to pin down before reporting
+### What usually matters here
 
-| Term | The question to ask |
-|---|---|
-| Users | Active users, total users or new users? GA4 reports several and defaults vary by report. |
-| Sessions | 30 minute inactivity timeout by default, and also ends at midnight and on a campaign change. Configurable. |
-| Engaged session | Over 10 seconds, or a conversion, or 2+ pageviews. The threshold is configurable. |
-| Bounce rate | In GA4 this is the inverse of engagement rate, not the UA definition. |
-| Conversion | Whatever was configured as a key event. Check what is actually counted. |
-| Channel grouping | Default or custom? Rules differ and both are called "channel". |
+A lens for reading the template, not a script. For each, find what the template
+does, then ask only where this site makes it matter. The definitions table in
+[analysis.md](analysis.md) explains the GA4 terms.
 
-## Search Console is a different dataset, not a subset
+- **Property and data streams:** which GA4 property, and which of its streams
+  are this site.
+- **Sites and hostnames:** which domains and subdomains count, and whether a
+  docs or blog subdomain is a separate page from the marketing site. Whether
+  any URL query parameters carry meaning.
+- **Search Console properties:** Domain or URL-prefix, and how many.
+- **Timezone and currency:** the property's own, against the warehouse and the
+  billing system. Search Console dates are Pacific Time.
+- **Key events:** which events count as conversions, whether the property
+  actually sends them, and what each is worth if revenue lands elsewhere.
+- **Sessions and channels:** the property's session and engagement settings,
+  and default or custom channel grouping.
+- **Internal and bot traffic:** internal traffic filters, staff and test
+  traffic, and known bots.
+- **Brand and page roles:** which queries are branded, and which paths are
+  existing customers (docs, help) rather than prospects.
+- **History:** how far back it matters, and when each export started.
 
-- **No sessions, no conversions.** `ingestion/gsc` lists what it does carry.
-- **GSC clicks will not equal GA4 organic sessions.** Different measurement
-  points, different filtering, different bot handling. Expect a gap and do not
-  reconcile them to zero.
-- **Position is an average**, weighted oddly, and an average of averages across
-  queries is not meaningful.
-- **Anonymised queries** are excluded from the query dimension but included in
-  totals, so query-level rows will not sum to the total.
-- **Limited history.** Search Console keeps roughly 16 months. Load it into
-  the warehouse if longer matters.
-- **Recent days are missing, and past days change.** Search Console lags two to
-  three days and revises history in place. Reload a trailing window rather than
-  only appending, and leave the last three days out of any comparison.
+### Reconcile against
 
-## The join that makes it useful
+The GA4 interface for sessions and users, and the Search Console interface for
+clicks and impressions, over the same settled window. Use a full week or month
+that ended at least three days ago: GA4 takes 24 to 48 hours to settle and
+Search Console lags two to three days. Compare Search Console against a
+property-level table, not one summed across pages.
 
-Web analytics alone reports traffic. Joined to billing, it reports acquisition:
+Expect documented differences, not zero. The README's "Scope and limitations"
+says which figures it matched and where the gaps are. GSC clicks will not equal
+GA4 organic sessions. Record each gap in `decisions.md`.
 
-| Question | Needs |
-|---|---|
-| Which landing pages produce paying customers | Landing page to signup to revenue |
-| Which channels bring customers who stay | Channel joined through to retention |
-| Where the funnel actually leaks | Session to signup to activation to payment |
-| Whether an SEO investment paid back | GSC clicks to signups over a stated window |
+## Answering questions afterwards
 
-The join key is the hard part. It usually means a signup form capturing the
-landing page and channel, stored on the account. If that does not exist, say
-that the join is the work, and that GA4-only answers stop at traffic.
-
-## Traps
-
-- **Averaging rates.** The average of daily conversion rates is not the
-  conversion rate. Sum numerators and denominators.
-- **Recent days are incomplete.** GA4 data can take 24 to 48 hours to settle.
-  Never compare an incomplete window to a complete one without labelling it.
-- **Bot traffic.** GA4 filters known bots, not all of them. A traffic spike with
-  no downstream effect is usually not people.
-- **Site changes look like behaviour changes.** A redesign, a URL change or a
-  new consent banner shifts every metric at once. Check the deploy log before
-  inventing a story.
-- **Seasonality.** Compare like periods, and say which.
+Read [analysis.md](analysis.md): what to check before answering, why GA4
+numbers will not match each other, how Search Console differs, and what this
+data cannot tell you. If the user is on a template, read its report assets and
+"Scope and limitations" before writing any SQL. Rebuilding that logic inline is
+how two answers to the same question start to differ.
 
 ## Never
 
 - **Ask for a credential** in chat or as a command argument. A Google service
-  account key is a private key. See **Credentials** above.
+  account key is a private key. If offered one, say not to send it and to
+  rotate it if already sent. Workflow step 6 has the safe path.
+- **Print a credential**, including in errors, summaries and generated files.
+- **Run against production** unless asked by name. Say which environment you used.
 - **Pull URL-level data without checking for tokens.** Query strings contain
   session tokens, password reset links and personal data. Strip parameters
   before anything reaches a summary.
 - **Treat IP or user-agent data as anonymous.** It is personal data in most
   jurisdictions.
+- **Pull raw event or user records into context** when an aggregate answers the
+  question.
+- **Write without asking.** Installing, initialising, editing configuration or
+  models, and running a pipeline all wait for the user's yes.
 
-## What this data cannot tell you
+Stop and ask before any write to a source system, outbound message,
+publication, credential change, production access, `--full-refresh` or backfill.
+On this template, `--full-refresh` rebuilds staging from whatever the export
+datasets still hold, and rescans them. Name that consequence and the expected
+scan.
 
-| Asked | Actually needed |
-|---|---|
-| "Why did traffic drop?" | Check for a tracking change, a deploy or a consent banner first. Those explain most drops. |
-| "Did this campaign work?" | An experiment or holdout. Traffic correlating with a launch is a hypothesis. |
-| "What is our real conversion rate?" | A decision about the denominator: all sessions, new sessions, or qualified traffic. Ask. |
-| "Which keyword drives revenue?" | Keyword-level revenue attribution, which GSC cannot provide. See `ai-search-visibility`. |
+## Unverified
 
-## Reference
-
-- Search visibility: [../ai-search-visibility/SKILL.md](../ai-search-visibility/SKILL.md)
+- **GA4 API access.** `ingestion/google_analytics` does not say what access the
+  service account needs on the GA4 property. Google's Data API documentation
+  is expected to require adding it as a user on the property. Read that page
+  and the connector's error output before telling the user it is done.

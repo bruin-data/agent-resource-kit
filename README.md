@@ -30,16 +30,17 @@ saying there as much as in an issue.
 |---|---|---|---|
 | [`bruin-agent`](resources/bruin-agent/) | experimental | read-only | Installing the Bruin CLI, creating a project, choosing a template, connecting a source, registering the Bruin MCP server, installing Bruin's agent skills |
 
-**[`startup-data-kit`](resources/startup-data-kit/)**: answering business
-questions from a startup's data, one domain per folder:
+**[`startup-data-kit`](resources/startup-data-kit/)**: an agent works with you
+to set up and customise a Bruin template for your startup, then answers
+questions from it. One domain per folder:
 
 | Resource | Status | Risk | Use it when |
 |---|---|---|---|
-| [`revenue-analytics`](resources/startup-data-kit/revenue-analytics/) | experimental | read-only | MRR, churn, expansion, failed payments, cash collection. Stripe, Chargebee, Paddle |
-| [`marketing-analytics`](resources/startup-data-kit/marketing-analytics/) | experimental | read-only | CAC, ROAS, attribution, campaigns, CRM pipeline. Google Ads, Meta, HubSpot, Klaviyo |
-| [`product-analytics`](resources/startup-data-kit/product-analytics/) | experimental | read-only | Activation, feature adoption, retention, usage-based churn signals. PostHog, Mixpanel, Amplitude |
-| [`web-analytics`](resources/startup-data-kit/web-analytics/) | experimental | read-only | Traffic, landing pages, channels, funnel drop-off. GA4, Search Console |
-| [`ai-search-visibility`](resources/startup-data-kit/ai-search-visibility/) | experimental | read-only | SEO, GEO and AEO. Search Console, AI crawler traffic, whether assistants mention you |
+| [`revenue-analytics`](resources/startup-data-kit/revenue-analytics/) | experimental | approval-required | MRR, churn, expansion, failed payments, cash collection. Stripe, Chargebee, Paddle |
+| [`marketing-analytics`](resources/startup-data-kit/marketing-analytics/) | experimental | approval-required | CAC, ROAS, attribution, campaigns, CRM pipeline. Google Ads, Meta, HubSpot, Klaviyo |
+| [`product-analytics`](resources/startup-data-kit/product-analytics/) | experimental | approval-required | Activation, feature adoption, retention, usage-based churn signals. PostHog, Mixpanel, Amplitude |
+| [`web-analytics`](resources/startup-data-kit/web-analytics/) | experimental | approval-required | Traffic, landing pages, channels, funnel drop-off. GA4, Search Console |
+| [`ai-search-visibility`](resources/startup-data-kit/ai-search-visibility/) | experimental | approval-required | SEO, GEO and AEO. Search Console, AI crawler traffic, whether assistants mention you |
 
 **[`data-engineering-skills`](resources/data-engineering-skills/)**: keeping
 pipelines healthy. Install Bruin's seven maintained skills, then add the

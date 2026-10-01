@@ -1,23 +1,25 @@
 ---
 name: revenue-analytics
-description: Use when answering questions about MRR, ARR, churn, retention, expansion, contraction, failed payments, cash collection or revenue changes from billing data such as Stripe, Chargebee, Paddle or RevenueCat, or when building and reviewing revenue models and metric definitions.
+description: Use when a startup wants revenue analytics set up or answered. Walks the user through installing Bruin, choosing and customising a maintained billing template (Stripe, Chargebee, Shopify) to how they actually bill, then answers MRR, ARR, churn, expansion, failed payment and cash collection questions from it.
 ---
 
 # Revenue analytics
 
-**Status:** experimental · **Risk:** read-only
+**Status:** experimental · **Risk:** approval-required
 
 > **Upstream documentation wins.** Where this file disagrees with the [Bruin
 > docs](https://getbruin.com/docs/bruin/overview.html), `bruin --help`, or your
 > billing provider's own documentation, those are right and this file is stale.
-> Written against Bruin CLI `v0.11.765`, checked 2026-09-30. The provider's own
+> Written against Bruin CLI `v0.11.765`, checked 2026-10-01. The provider's own
 > reporting is also the reference you reconcile against, not this file.
 
-The failure mode here is not an error message. It is a confident, well formatted,
-wrong number that someone forwards to an investor. Everything below exists to
-make that less likely.
+Two jobs. **Set up:** work with the user to install a maintained Bruin billing
+template and customise it to how this business actually bills. **Answer:**
+questions from what it built, in [analysis.md](analysis.md).
 
-Setup is in the `bruin-agent` skill. This assumes a project exists.
+The failure mode is not an error message. It is a confident, well formatted,
+wrong number that someone forwards to an investor. Most of it is prevented
+during setup, by asking the user what the template would otherwise assume.
 
 ## Look it up live
 
@@ -27,164 +29,90 @@ themselves, ask the tool, and tell the user if it disagrees with this file:
 - **Flags:** `bruin <command> --help`. The docs lag the CLI.
 - **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
   `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
-  `getting-started/templates-docs/stripe-bigquery-README` and
-  `getting-started/templates-docs/chargebee-bigquery-README` for what each
-  template builds and the metric policy it ships, `ingestion/<source>` (for
-  example `ingestion/stripe`) for a source's tables and loading modes,
+  `getting-started/templates-docs/<name>-README` for what a template builds and
+  the metric policy it ships, `ingestion/<source>` (for example
+  `ingestion/stripe`) for a source's tables and loading modes,
   `ingestion/frankfurter` and `ingestion/exchangeratesapi` for FX rates,
   `core-concepts/semantic-layer` and `quality/overview`.
 - **The user's environment:** Bruin Cloud MCP, or
   `bruin cloud ... --output json`.
 
-**Credentials.** Never ask for one in chat or pass one as a command argument.
-For a source, the user runs `bruin connections add` with no flags (the
-interactive prompt; its flag mode puts the secret on the command line) or
-references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
-exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
-which is active without printing it.
+## Setting it up
 
-## Sources and where to start
+Follow [workflow.md](workflow.md) from the top: install, MCP, repository,
+warehouse, template, credentials, then the questions. It is the same process
+for every skill in this kit. What is specific to revenue is below.
 
-Run `bruin init --help` for the current template list and pick the billing one
-that matches the user's source and warehouse. Before recommending it, read its
-README with `bruin_get_doc_content('getting-started/templates-docs/<name>-README')`.
-Two caveats the README will not flag for you:
+> **Important: do not ask a fixed list of questions.** Read the template as it
+> is today and work out which of its choices this user needs to confirm.
+> Templates change, so the questions change with them. Workflow step 7 says how.
+
+### Templates to consider
+
+Ask which billing system they use, and whether revenue also arrives elsewhere
+(an app store, a second processor, invoices outside the billing system). Then
+check `bruin init --help`; at the time of writing the candidates were the
+`stripe-*`, `chargebee-*` and `shopify-*` templates, plus `ecommerce`.
+
+Caveats the READMEs will not flag:
 
 - **`stripe-databricks`** is bronze ingestion plus one silver table, with no MRR
   reports, and has no README in the docs. Read the `README.md` it scaffolds.
 - **`shopify-bigquery`** only copies raw Shopify tables. The modelling is yours.
+- **`ecommerce`** always includes Shopify. It is not a general way to combine
+  several billing systems.
+- **There is no DuckDB template for Stripe.** If the user wants Stripe without a
+  warehouse, that is a project, not a flag. Say so.
 
-For a billing source with no template, read `ingestion/<source>` and model it
-yourself. Check the docs tree rather than assuming a connector exists.
+For a billing source with no template, read `ingestion/<source>`. Ingesting it
+is easy; modelling MRR from it is the work. Agree that with the user before
+starting.
 
-If the user is on a template, read its report assets before writing any SQL.
-Rebuilding that logic inline is how two answers to the same question start to
-differ.
+### What usually matters here
 
-Multi-currency: `ingestion/frankfurter` and `ingestion/exchangeratesapi` both
-serve rates. Decide the conversion policy before wiring either in.
+A lens for reading the template, not a script. For each, find what the template
+does, then ask only where this business makes it matter.
+[metric-decisions.md](metric-decisions.md) explains each one and what to ask.
 
-## Before answering any revenue question
+- **Billing intervals:** annual or multi-year plans, and how they spread to MRR.
+- **Currencies:** more than one, and whether to convert or report per currency.
+- **Trials, paused and past-due subscriptions:** which count as MRR.
+- **Discounts, taxes, usage billing and one-off charges:** in or out.
+- **Timing:** MRR observed at month start, month end, or averaged.
+- **Accounts to exclude:** internal, test and free accounts.
+- **History:** how far back it matters, and whether the template can backfill
+  it. Snapshot-based templates often cannot; the README says.
 
-1. **Read the model before querying it.** Asset descriptions state the grain,
-   the MRR convention and what is excluded. Do not infer meaning from column
-   names.
-2. **Prefer named metrics over your own SQL.** If a semantic model exists, use
-   it. A metric asked for by name returns the same definition every time.
-3. **Prefer report tables over raw tables.**
-4. **Check freshness first.** A correct number from a stale pipeline is still
-   the wrong answer. Read the last runs from Bruin Cloud MCP
-   (`pipeline-run-list`, `asset-runs`, or `asset-health` on OXR-orchestrated
-   pipelines) or `bruin cloud runs list --output json`, then the maximum date in
-   the raw table.
+The Stripe and Chargebee templates already pick defaults for several of these.
+Read the metric policy in the README, say what it picked, and confirm each with
+the user rather than inheriting it.
 
-## Always state these alongside a number
+### Reconcile against
 
-- **The definition.** Which metric, which grain, which convention.
-- **The window.** The exact months.
-- **The source.** Which asset it came from.
-- **What is excluded.** Whichever decisions below apply and are unhandled.
+The billing provider's own dashboard: last month's MRR or active subscription
+count is usually the easiest number for the user to check. Expect the
+definitions above to explain most gaps, and record each one.
 
-Never report MRR without saying how it is observed. Never report a change
-without saying what drove it. "MRR fell 3%" is not an answer. "MRR fell 3%
-because one Growth account churned and nothing replaced it" is.
+## Answering questions afterwards
 
-## The definitions that change the number
-
-Not edge cases. Each produces a different, defensible MRR, and a model that
-picks silently teaches the user that a hard question is settled. The Stripe and
-Chargebee templates ship defaults for several of them; read the README's metric
-policy and confirm each default with the user rather than inheriting it.
-
-Full detail in [metric-decisions.md](metric-decisions.md). Read it when building
-or reviewing a model, not for every question.
-
-The short list: annual and multi-year plans, multiple currencies, usage billing,
-trials, paused and past-due subscriptions, discounts, taxes, proration, refunds
-and disputes, and whether MRR is observed at month start, month end or averaged.
-
-## Decompose the change, do not just report it
-
-A month-over-month change should break into new, reactivation, expansion,
-contraction and churn, and those should sum to the change. Check the
-reconciliation before quoting it. If it does not reconcile, say so rather than
-picking the number that looks right.
-
-Two traps to check explicitly:
-
-- **Opening balance reported as new business.** Customers acquired before the
-  window are not new in month one. This is the most common way a revenue report
-  overstates growth.
-- **Flat is not nothing happening.** A new customer exactly offsetting a churn
-  reads as zero net change. Show the components.
-
-## Separate MRR from cash
-
-They will not match, and the gap is usually the interesting part. MRR is
-recurring revenue on a subscription basis. Invoices land on billing
-anniversaries and can go unpaid. A customer whose card is failing still carries
-MRR.
-
-Report collection rate next to MRR. Falling collections under flat MRR is a
-problem that a revenue summary alone hides completely.
-
-## Churn risk from billing alone
-
-Billing signals worth surfacing: unpaid invoices, an invoice written off,
-recent contraction, a downgrade.
-
-Each is a question, not a conclusion. A failed invoice is as often an expired
-card as a departing customer. Say that. Product usage is what makes churn
-prediction real; see the `product-analytics` skill.
-
-## When a number looks wrong
-
-Cheapest first. Usually it is one of the first two.
-
-1. **Check the run.** Every asset succeeded, every quality check passed?
-2. **Check freshness.** Maximum date in raw versus the source. A missing recent
-   load explains most "revenue dropped" reports.
-3. **Reconcile one number by hand.** One month, one customer, from report table
-   back to raw record. Report the trace, not just the conclusion.
-4. **Check the definition against the question.** Most disagreements about a
-   revenue number are disagreements about a definition.
-5. **Check what the load can see.** The `stripe-bigquery` raw assets load
-   incrementally on Stripe's `created` timestamp, so a subscription cancelled or
-   upgraded, or an invoice paid or voided, after its creation window is not
-   picked up until a wider re-run. Read the template README's incremental-loading
-   section and `ingestion/stripe` before blaming the model.
-6. **Check how much history exists.** MRR on the Stripe and Chargebee templates
-   comes from daily snapshots. Stripe history starts at the first run and cannot
-   be backfilled; Chargebee can backfill subscription episodes but not repricing.
-   Movement and retention need two contiguous months of snapshots before they
-   classify anything. Empty is not zero.
-
-If the model and the source genuinely disagree, show the gap. Do not adjust a
-model to match a number someone expected.
+Read [analysis.md](analysis.md): what to check before answering, what to state
+with every number, and what billing data cannot tell you. If the user is on a
+template, read its report assets before writing any SQL. Rebuilding that logic
+inline is how two answers to the same question start to differ.
 
 ## Never
 
 - **Ask for a credential** in chat or as a command argument. If offered one, say
-  not to send it and to rotate it if already sent. See **Credentials** above.
+  not to send it and to rotate it if already sent. Workflow step 6 has the
+  safe path.
 - **Print a credential**, including in errors, summaries and generated files.
 - **Run against production** unless asked by name. Say which environment you used.
 - **Pull raw customer records into context** when an aggregate answers the
   question. Use identifiers over names and contact details.
+- **Write without asking.** Installing, initialising, editing configuration or
+  models, and running a pipeline all wait for the user's yes.
 
 Stop and ask before any write to a source system, outbound message,
 publication, credential change, production access, `--full-refresh` or backfill.
 On a snapshot-based template, `--full-refresh` after the first load discards MRR
 history that cannot be rebuilt from the source. Name that consequence.
-
-## What billing data cannot tell you
-
-| Asked | Actually needed |
-|---|---|
-| "Why did they churn?" | A churn reason, a survey, or product usage. Billing data does not contain it. |
-| "Which feature drives retention?" | Product analytics on a stable shared identity. See `product-analytics`. |
-| "Which channel brings the best customers?" | Ad spend and attribution joined to revenue. See `marketing-analytics`. |
-| "What is our LTV?" | A retention curve and a margin assumption. Both are decisions, not queries. |
-| "Forecast next quarter" | A stated method and its assumptions. Extrapolating a line is not a forecast. |
-
-Say what is missing and offer the concrete next step. Do not produce an
-approximation without labelling it as one.
