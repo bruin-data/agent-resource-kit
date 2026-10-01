@@ -1,0 +1,6 @@
+# attio-cli sample scripts. Install with: pip install -r requirements.txt
+requests>=2.31.0,<3.0.0
+
+# Only needed if you use a YAML config file (attio-cli.yml). Skip it if you use
+# a .json config, or no config at all.
+PyYAML>=6.0,<7.0

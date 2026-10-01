@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security or credential problem
+    url: https://github.com/bruin-data/agent-resource-kit/security/advisories/new
+    about: Report privately. Never in a public issue.
+  - name: Help with Bruin itself
+    url: https://join.slack.com/t/bruindatacommunity/shared_invite/zt-3cymzktqu-bvFxPGyQHpvi~dok_W0L3w
+    about: The Bruin Slack community. Startup office hours are announced in #startups.

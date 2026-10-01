@@ -1,0 +1,14 @@
+# record-terminal-demo sample script.
+#
+# There are no Python package dependencies. scripts/render_demo.py is standard
+# library only and needs Python 3.9 or newer, so this file is intentionally
+# empty of requirements.
+#
+# The dependencies that matter are system tools, not pip packages:
+#
+#   vhs      https://github.com/charmbracelet/vhs   (brew install vhs)
+#   ttyd     required by vhs                        (installed with it on brew)
+#   ffmpeg   encoding and contact sheets            (brew install ffmpeg)
+#   ffprobe  ships with ffmpeg
+#
+# See README.md for install commands on other platforms.
