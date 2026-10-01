@@ -79,12 +79,6 @@ writing and thinking, where no tool is involved.
 |---|---|---|---|
 | [`staged-writing`](resources/prompts/staged-writing/) | experimental | read-only | You want to write the prose yourself and have an agent outline, proofread, fact-check and tighten it around you |
 
-**[`templates`](resources/templates/)**: starting points you fill in.
-
-| Resource | Status | Risk | Use it when |
-|---|---|---|---|
-| [`autonomy-policy`](resources/templates/autonomy-policy/) | experimental | read-only | Deciding what an agent may do on its own, and writing the `AGENTS.md` section that records it |
-
 Everything is `experimental` today: the commands in `bruin-agent` were verified
 against a live Bruin CLI, and the connector and template lists came from Bruin's
 own tooling, but nobody other than the author has used any of these end to end.
