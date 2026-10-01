@@ -5,13 +5,8 @@
 > is stale. Each skill states the version and date it was written against.
 > Checked 2026-10-01.
 
-Getting a startup's data into shape and answering questions from it. Each skill
-has an agent work with the user to set up a maintained Bruin template and
-customise it to how the business actually works, then answer questions from
-what it built. One resource per domain, because the traps are domain-specific:
-what ruins a revenue number is not what ruins an attribution number.
-
-Each folder is an independent skill. Take the ones you need.
+One skill per domain: an agent sets up a maintained Bruin template with the
+user, customises it, then answers questions from it. Take the folders you need.
 
 | Resource | Domain | Example sources |
 |---|---|---|
@@ -20,39 +15,34 @@ Each folder is an independent skill. Take the ones you need.
 | [`product-analytics`](product-analytics/) | Usage and activation | PostHog, Mixpanel, Amplitude, Firebase |
 | [`web-analytics`](web-analytics/) | Traffic and acquisition | GA4, Search Console |
 | [`ai-search-visibility`](ai-search-visibility/) | SEO, GEO, AEO | Search Console, server logs, third-party sampling tools |
+| [`finance-accounting`](finance-accounting/) | Bookkeeping and accounting | QuickBooks Online |
+| [`support-analytics`](support-analytics/) | Customer support | Gorgias, Zendesk, Intercom, Freshdesk |
+| [`ai-coding-spend`](ai-coding-spend/) | AI coding tools | Claude Code, Cursor |
+| [`sheets-and-notion`](sheets-and-notion/) | Hand-maintained data | Google Sheets, Notion |
 
-The sources are examples, not the supported list. Check what Bruin can ingest
-today with the local Bruin MCP server's `bruin_get_docs_tree` (the `ingestion/`
-section), and read `ingestion/<source>` before promising one.
+Sources are examples; read `ingestion/<source>` before promising one. Get one
+domain reconciling against its source before adding a second.
 
 ## How each skill works
 
-Every folder holds the same three kinds of file:
+Every folder holds exactly these three files:
 
 | File | What it is |
 |---|---|
 | `SKILL.md` | What is specific to the domain: which templates to consider, what usually needs the user's input, what to reconcile against |
-| `workflow.md` | The shared process: check Bruin is installed and its MCP server connected, work inside the user's git repository, confirm the warehouse, pick a template, set up credentials, then ask, customise, run and reconcile |
+| `workflow.md` | The shared setup process, from installing Bruin to reconciling the first run |
 | `analysis.md` | How to answer questions once the pipeline exists |
 
-`workflow.md` is identical in every folder, so a skill copied on its own still
-works. `tests/check.py` fails if the copies drift apart; edit one and copy it to
-the rest.
+`workflow.md` is identical in every folder, so a skill copied alone still works.
+`tests/check.py` fails if the copies drift; edit one and copy it to the rest.
 
-The skills do not carry a fixed list of questions. Templates change, so the
-agent reads the template as it is and works out what this user needs to decide.
-Answers go in a `decisions.md` beside the pipeline.
-
-## Start here
-
-Take the domain that answers the question you actually have. Most startups
-should get one domain reconciling against its own source before adding a second.
-Connecting five sources before any of them is trusted produces a dashboard
-nobody believes.
+The skills carry no fixed list of questions: the agent reads the template as it
+is today and works out what this user must decide. Answers go in `decisions.md`
+beside the pipeline.
 
 ## The joins are where the value is
 
-Each domain answers useful questions alone. The ones worth the setup cross two:
+The questions worth the setup cross domains:
 
 | Question | Domains |
 |---|---|
@@ -60,7 +50,8 @@ Each domain answers useful questions alone. The ones worth the setup cross two:
 | Which channels bring customers who stay | marketing + revenue |
 | Where the funnel actually leaks | web + product + revenue |
 | Whether content investment pays back | ai-search-visibility + web + revenue |
+| Which customers cost more to support than they pay | support + revenue |
+| Actuals against the plan | sheets-and-notion + revenue or finance |
 
-Every one of these depends on a stable shared identifier existing between the
-two sources. When it does not, that is the work, and the skills say so rather
-than producing a number from whichever side is available.
+Each needs a stable identifier shared by the sources. Where there is none, that
+is the work, and the skills say so rather than answer from one side.

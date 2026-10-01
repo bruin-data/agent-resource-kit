@@ -41,6 +41,10 @@ questions from it. One domain per folder:
 | [`product-analytics`](resources/startup-data-kit/product-analytics/) | experimental | approval-required | Activation, feature adoption, retention, usage-based churn signals. PostHog, Mixpanel, Amplitude |
 | [`web-analytics`](resources/startup-data-kit/web-analytics/) | experimental | approval-required | Traffic, landing pages, channels, funnel drop-off. GA4, Search Console |
 | [`ai-search-visibility`](resources/startup-data-kit/ai-search-visibility/) | experimental | approval-required | SEO, GEO and AEO. Search Console, AI crawler traffic, whether assistants mention you |
+| [`finance-accounting`](resources/startup-data-kit/finance-accounting/) | experimental | approval-required | Receivables and aging, invoiced vs collected, customer concentration, vendor balances. QuickBooks Online |
+| [`support-analytics`](resources/startup-data-kit/support-analytics/) | experimental | approval-required | Ticket volume, response and resolution time, CSAT, backlog, support load per customer. Gorgias, Zendesk, Intercom |
+| [`ai-coding-spend`](resources/startup-data-kit/ai-coding-spend/) | experimental | approval-required | AI coding tool adoption, usage and estimated cost by team, model and platform. Claude Code, Cursor |
+| [`sheets-and-notion`](resources/startup-data-kit/sheets-and-notion/) | experimental | approval-required | Hand-maintained plans, targets, budgets and mappings, joined to the other domains. Google Sheets, Notion |
 
 **[`data-engineering-skills`](resources/data-engineering-skills/)**: keeping
 pipelines healthy. Install Bruin's seven maintained skills, then add the
@@ -72,10 +76,7 @@ ship code you run yourself, with your own credentials.
 | [`blog-image-generator`](resources/tools/blog-image-generator/) | experimental | approval-required | Finding a licence-friendly Unsplash photo and turning it into a cropped, treated cover image |
 | [`linkedin-enrichment`](resources/tools/linkedin-enrichment/) | experimental | approval-required | Pulling public LinkedIn company, person, post or job data through paid Apify actors |
 
-Everything is `experimental` today: the commands in `bruin-agent` were verified
-against a live Bruin CLI, and the connector and template lists came from Bruin's
-own tooling, but nobody other than the author has used any of these end to end.
-A resource becomes `stable` when someone else has.
+Everything is `experimental` today.
 
 **Risk** is the worst a resource can do when followed as written. `read-only`
 reads and produces local files. `approval-required` can write, run or send

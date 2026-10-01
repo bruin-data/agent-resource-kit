@@ -112,9 +112,9 @@ usually what it admits.
 - **Say what the tool cannot do.** The analytics skills in `startup-data-kit`
   have a "what this cannot tell you" section, because the alternative is an
   agent producing a confident answer to a question the data cannot answer.
-- **Say what the user has to decide.** `revenue-analytics` has ten decisions it
-  cannot make for you, because MRR genuinely depends on them. A resource that
-  picks silently teaches the user that a hard question is settled.
+- **Say what the user has to decide.** The startup-data-kit skills list what
+  usually needs the user's input, because the numbers genuinely depend on it. A
+  resource that picks silently teaches the user that a hard question is settled.
 - **Name the traps specific to that data.** Generic advice gets skipped. "GA4
   thresholding means totals will not equal the sum of a breakdown" does not.
 - **Write to the agent, imperatively.** Not prose about the tool.
