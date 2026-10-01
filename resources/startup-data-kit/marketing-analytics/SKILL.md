@@ -1,24 +1,28 @@
 ---
 name: marketing-analytics
-description: Use when analysing advertising spend, CAC, ROAS, attribution, campaign performance, email and lifecycle marketing, or CRM pipeline data from Google Ads, Meta, TikTok, LinkedIn, HubSpot, Klaviyo, Salesforce or similar, and when joining marketing spend to revenue.
+description: Use when a startup wants marketing analytics set up or answered. Walks the user through installing Bruin, choosing a template or ingesting their ad, email and CRM sources (Google Ads, Meta, TikTok, LinkedIn, HubSpot, Klaviyo, Salesforce), customising attribution, currency, timezone and cost definitions to their business, then answers CAC, ROAS, attribution and campaign questions from it.
 ---
 
 # Marketing analytics
 
-**Status:** experimental · **Risk:** read-only
+**Status:** experimental · **Risk:** approval-required
 
 > **Upstream documentation wins.** Where this file disagrees with the [Bruin
-> docs](https://getbruin.com/docs/bruin/overview.html) or with an ad platform's
-> own documentation, those are right and this file is stale. Ad platform metric
-> definitions and attribution windows change often and without notice; check
-> them rather than trusting a description here. Written against Bruin CLI
-> `v0.11.765`, checked 2026-09-30.
+> docs](https://getbruin.com/docs/bruin/overview.html), `bruin --help`, or an ad
+> platform's own documentation, those are right and this file is stale. Ad
+> platform metric definitions and attribution windows change often and without
+> notice; check them rather than trusting a description here. Written against
+> Bruin CLI `v0.11.765`, checked 2026-10-01. Each platform's own spend report is
+> the reference you reconcile against, not this file.
 
-Marketing data is the easiest place to produce a number that is precise,
-well presented, and meaningless. Attribution is a modelling choice, not a
-measurement, and the main job here is keeping that visible.
+Two jobs. **Set up:** work with the user to ingest their marketing sources, on a
+maintained Bruin template where one fits, and customise it to how this business
+buys and counts. **Answer:** questions from what it built, in
+[analysis.md](analysis.md).
 
-Setup is in the `bruin-agent` skill. This assumes a project exists.
+Attribution is a modelling choice, not a measurement. The failure mode is a
+precise, well presented ROAS that means nothing. Most of it is prevented during
+setup, by asking the user what the model would otherwise assume.
 
 ## Look it up live
 
@@ -29,127 +33,113 @@ themselves, ask the tool, and tell the user if it disagrees with this file:
 - **Docs:** the local Bruin MCP server, `bruin_get_doc_content('<path>')`, or
   `https://getbruin.com/docs/bruin/<path>.html` without it. For this skill:
   `bruin_get_docs_tree` (the `ingestion/` section) for which ad, lifecycle, CRM
-  and support sources exist, `ingestion/<source>` (for example
-  `ingestion/google-ads`) for a source's tables and connection fields, and
-  `getting-started/templates-docs/ecommerce-README` for the `ecommerce`
-  template. Page names can differ from the connection type key (`google-ads` is
-  `googleads`).
+  and attribution sources exist, `ingestion/<source>` (for example
+  `ingestion/google-ads`, `ingestion/facebook-ads`) for a source's tables and
+  connection fields, `getting-started/templates-docs/ecommerce-README`,
+  `ingestion/frankfurter` for FX rates, and `quality/overview`. Page names can
+  differ from the connection type key (`google-ads` is `googleads`).
 - **The user's environment:** Bruin Cloud MCP, or
   `bruin cloud ... --output json`.
 
-**Credentials.** Never ask for one in chat or pass one as a command argument.
-For a source, the user runs `bruin connections add` with no flags (the
-interactive prompt; its flag mode puts the secret on the command line) or
-references `${VAR}` in `.bruin.yml`. For Cloud, `bruin cloud login` or an
-exported `BRUIN_CLOUD_API_KEY`, never `--api-key`. `bruin auth status` shows
-which is active without printing it.
+## Setting it up
 
-## Sources
+Follow [workflow.md](workflow.md) from the top: install, MCP, repository,
+warehouse, template, credentials, then the questions. It is the same process
+for every skill in this kit. What is specific to marketing is below.
 
-Bruin ingests ad platforms, mobile attribution, email and lifecycle tools, CRMs,
-and support tools (useful as a churn signal). Check the docs tree for the
-current list rather than assuming a connector exists or does not.
+> **Important: do not ask a fixed list of questions.** Read the template as it
+> is today and work out which of its choices this user needs to confirm.
+> Templates change, so the questions change with them. Workflow step 7 says how.
 
-Run `bruin init --help` for templates. Most of these sources have none:
-ingestion is supported, the modelling is yours.
+### Templates to consider
 
-The `ecommerce` template is not a general marketing template. It always
-includes Shopify, takes Stripe or Shopify Payments, and supports Facebook,
-Google and TikTok ads only. Read its README before recommending it. If the user
-is on it, read `rpt_marketing_roi` before quoting it: as checked, its
-`attributed_revenue` joins paid orders to web sessions on date alone, so each
-day's paid revenue is counted against every channel with sessions that day, once
-per session row. That is not an attribution model, and its `roas` inherits the
-problem. Read the SQL in the user's copy, since the template may have changed.
+Ask which ad platforms they spend on, and which carries most of the spend. Ask
+which email or lifecycle tool and which CRM they use, and where revenue lives,
+since CAC and ROAS need it. Start with the biggest platform and get it
+reconciling before adding the next.
 
-## Start with one platform, not all of them
+Then check `bruin init --help`. Few templates cover marketing. At the time of
+writing, only `ecommerce` modelled ad spend. Caveats the README will not flag:
 
-Connecting five ad platforms before any of them reconciles produces a dashboard
-nobody trusts. Get one platform matching its own UI first, then add the next.
+- **`ecommerce`** always includes Shopify. Its wizard offers ClickHouse,
+  BigQuery or Snowflake; Shopify Payments or Stripe; Klaviyo or HubSpot;
+  Facebook, Google and TikTok ads; GA4 or Mixpanel. It is not a general
+  marketing template. Without Shopify it does not fit.
+- **The wizard needs an interactive terminal.** `bruin init ecommerce` fails
+  without one. Give the user the command and let them answer its prompts, then
+  read what it generated.
+- **Its `rpt_marketing_roi` is not attribution.** As checked in `v0.11.765`, it
+  joins paid orders to web sessions on date alone, so its `attributed_revenue`
+  and `roas` overcount. `stg_marketing_spend` labels every ad platform
+  `paid_ads`, while GA4 sessions from Google or TikTok land in `paid_search` or
+  `other`. `cost_per_acquisition` sums platform-reported conversions across
+  platforms. Show the user the SQL and agree a fix before anyone quotes it.
+- **`demo-snowflake-salesforce`** is a demo. Its seed asset writes dummy records
+  into Salesforce, and its first run uses `--full-refresh`. Never point it at
+  the user's real org.
+- **`google-web-analytics`** is organic search from GA4 and Search Console, with
+  no ad spend. That is the `web-analytics` skill.
 
-Ask which platform carries most of the spend and start there.
+For anything else (LinkedIn, Reddit, Snapchat, Apple Ads, AppsFlyer, Adjust,
+HubSpot, Salesforce, Klaviyo without Shopify), read `ingestion/<source>`.
+Ingesting it is easy; the channel mapping, attribution and join to revenue are
+the work. Say that no template fits, and agree the modelling with the user
+before starting.
 
-## The numbers only mean something together
+### What usually matters here
 
-Spend alone is an expense report. These are the joins that make it analysis:
+A lens for reading the template, not a script. For each, find what the template
+or ingested source does, then ask only where this business makes it matter.
+[analysis.md](analysis.md) explains why each one moves the number.
 
-| Question | Needs |
-|---|---|
-| CAC by channel | Ad spend joined to new customers from billing |
-| ROAS | Ad spend joined to revenue, over a stated window |
-| Payback period | CAC joined to the revenue curve per cohort |
-| Which channel brings customers who stay | Acquisition channel carried through to retention |
-| Pipeline conversion | CRM stages joined to closed revenue |
+- **Attribution model and window:** platform reported, last touch, first touch,
+  or self-reported at signup, and each platform's click and view windows.
+- **Which conversions count:** platform-reported conversions, or new customers
+  from billing. View-through in or out.
+- **Channel mapping:** how sources, mediums and campaigns map to channels.
+- **Currency:** each ad account's currency, and whether to convert or report per
+  currency.
+- **Timezone:** each ad account's timezone against the warehouse and billing.
+- **Cost basis:** spend gross or net of platform fees, agency fees, credits and
+  rebates.
+- **Revenue basis:** ROAS on gross or net of refunds.
+- **Identity join to revenue:** the shared identifier between ad, web and billing
+  data (click ID, UTM, customer ID). If none exists, building it is the work.
+- **What to exclude:** test or internal accounts, and campaigns or accounts that
+  belong to another business line.
+- **History and late conversions:** how far back matters, and whether the load
+  re-reads recent days while conversions are still landing.
 
-Every one of these crosses into another source. If the identity join does not
-exist, that is the work, not a detail of it. Say so rather than producing a
-number from whichever side happens to be available.
+### Reconcile against
 
-## Attribution is a choice, so name it
+Each ad platform's own spend report for one recent full month, in the account's
+currency and timezone. Reconcile spend first: it is deterministic. Platform
+conversions will not match billing by design; compare new customers against the
+billing system instead. Record each gap and its explanation.
 
-Platform-reported conversions do not agree with each other and do not agree with
-your billing data. This is expected, not a bug.
+## Answering questions afterwards
 
-- **Each platform claims credit for the same conversion.** Sum them and you get
-  more conversions than you had customers. Never add conversions across
-  platforms.
-- **Attribution windows differ per platform and are configurable.** A 7-day
-  click window and a 28-day window are different questions.
-- **View-through conversions** inflate platform numbers relative to anything
-  you can verify yourself.
-- **iOS ATT and cookie loss** mean platform attribution degraded years ago.
-
-State which attribution model is in use with any channel-level claim: platform
-reported, last touch, first touch, or self-reported at signup. Say when the
-model cannot settle a question, and say what would.
-
-Self-reported attribution ("how did you hear about us") is unfashionable and
-often the most honest signal available for early-stage companies.
-
-## Currency, timezone and cost definitions
-
-Small things that cause persistent unexplained gaps:
-
-- **Currency.** Ad platforms report in the account currency. Decide the
-  conversion policy, same as for revenue.
-- **Timezone.** Platforms report in the ad account's timezone, which is often
-  not the warehouse timezone or the billing timezone. A daily join across two
-  timezones is off by a partial day, every day.
-- **Cost basis.** Is spend gross or net of platform fees, agency fees, credits
-  and rebates? Say which.
-- **Refunds.** ROAS on gross revenue and ROAS on net revenue are different
-  numbers.
-
-## Traps worth checking before reporting
-
-- **Averaging rates.** The average of daily CTRs is not the CTR. Sum the
-  numerators and denominators, then divide.
-- **Comparing periods of different length.** A 28-day month against a 31-day
-  month is a 10% difference before anything happened.
-- **Small denominators.** A campaign with 40 clicks and 2 conversions has a 5%
-  conversion rate and also almost no information. Report the denominator.
-- **Late attribution.** Recent days are undercounted because conversions are
-  still landing. Never compare an incomplete recent window against a complete
-  older one without labelling it.
-- **Renamed campaigns.** A renamed campaign looks like one ending and another
-  starting. Join on ID, not name.
+Read [analysis.md](analysis.md): what to check before answering, why platform
+numbers disagree, and what marketing data cannot tell you. If the user is on a
+template, read its report assets before writing any SQL. Rebuilding that logic
+inline is how two answers to the same question start to differ.
 
 ## Never
 
-- **Ask for a credential** in chat or as a command argument. See
-  **Credentials** above.
+- **Ask for a credential** in chat or as a command argument. If offered one, say
+  not to send it and to rotate it if already sent. Workflow step 6 has the
+  safe path.
+- **Print a credential**, including in errors, summaries and generated files.
 - **Write to an ad platform.** Pausing a campaign, changing a budget or sending
   an email is a write with immediate money and reputation consequences. Read
   only. Propose the change and let a person make it.
 - **Send marketing email.** Even a test. Stop and ask.
+- **Run against production** unless asked by name. Say which environment you used.
 - **Pull contact lists into context.** Names, emails and phone numbers are rarely
   needed for analysis. Aggregate or use identifiers.
+- **Write without asking.** Installing, initialising, editing configuration or
+  models, and running a pipeline all wait for the user's yes.
 
-## What this data cannot tell you
-
-| Asked | Actually needed |
-|---|---|
-| "Which channel caused this growth?" | An experiment or a holdout. Correlated spend and growth is a hypothesis. |
-| "Should we cut this channel?" | Incrementality, not attributed ROAS. A channel can score well and be claiming credit for customers who would have arrived anyway. |
-| "Why did CPMs rise?" | Usually auction dynamics you cannot see. Say so rather than inventing a reason. |
-| "What is our true CAC?" | A decision about which costs count: paid only, plus salaries, plus tooling. Ask. |
+Stop and ask before any write to a source system, outbound message,
+publication, credential change, production access, `--full-refresh` or backfill.
+Name what a `--full-refresh` replaces before asking.

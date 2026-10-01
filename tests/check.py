@@ -32,6 +32,10 @@ MAX_SKILL_WORDS = 2000
 # Upstream moves. A file nobody has rechecked in this long is a hint, not a fact.
 STALE_DAYS = 180
 
+# Skills are copied into a project one folder at a time, so a file several
+# skills share has to live in each folder. These copies must stay identical.
+SHARED_FILES = {"resources/startup-data-kit/*/workflow.md": "startup-data-kit"}
+
 # These must never be committed, whatever they contain.
 FORBIDDEN = {".bruin.yml", ".bruin.yaml", ".env", "credentials.json", "service-account.json"}
 
@@ -221,6 +225,24 @@ def check_internal_identifiers() -> None:
                     err(path, f"line {line_no}: {label} ('{m.group(0)[:40]}')")
 
 
+def check_shared_files() -> None:
+    """A shared file edited in one folder and not the others is how the copies
+    drift apart. Fail until every copy matches, and until every skill in the
+    group carries one."""
+    for pattern, group in SHARED_FILES.items():
+        copies = sorted(REPO.glob(pattern))
+        skills = sorted(p.parent for p in (RESOURCES / group).glob("*/SKILL.md"))
+        for skill in skills:
+            if not (skill / pathlib.Path(pattern).name).exists():
+                err(skill / "SKILL.md", f"missing its copy of {pathlib.Path(pattern).name}")
+        if not copies:
+            continue
+        reference = copies[0].read_bytes()
+        for copy in copies[1:]:
+            if copy.read_bytes() != reference:
+                err(copy, f"differs from {copies[0].relative_to(REPO)}; shared copies must be identical")
+
+
 def check_forbidden_files() -> None:
     for path in REPO.rglob("*"):
         if ".git" in path.parts or not path.is_file():
@@ -243,6 +265,7 @@ def main() -> int:
     check_index()
     check_links()
     check_internal_identifiers()
+    check_shared_files()
     check_forbidden_files()
 
     docs = len(list(RESOURCES.rglob("*.md")))
