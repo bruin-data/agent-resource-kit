@@ -71,13 +71,6 @@ ship code you run yourself, with your own credentials.
 | [`blog-image-generator`](resources/tools/blog-image-generator/) | experimental | approval-required | Finding a licence-friendly Unsplash photo and turning it into a cropped, treated cover image |
 | [`linkedin-enrichment`](resources/tools/linkedin-enrichment/) | experimental | approval-required | Pulling public LinkedIn company, person, post or job data through paid Apify actors |
 
-**[`prompts`](resources/prompts/)**: working methods for an agent helping with
-writing and thinking, where no tool is involved.
-
-| Resource | Status | Risk | Use it when |
-|---|---|---|---|
-| [`staged-writing`](resources/prompts/staged-writing/) | experimental | read-only | You want to write the prose yourself and have an agent outline, proofread, fact-check and tighten it around you |
-
 Everything is `experimental` today: the commands in `bruin-agent` were verified
 against a live Bruin CLI, and the connector and template lists came from Bruin's
 own tooling, but nobody other than the author has used any of these end to end.
