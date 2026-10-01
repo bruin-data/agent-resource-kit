@@ -59,7 +59,6 @@ work on a codebase.
 
 | Resource | Status | Risk | Use it when |
 |---|---|---|---|
-| [`ultra-review`](resources/coding-agent-workflows/ultra-review/) | experimental | read-only | You want a deliberately harsh maintainability review of a branch |
 | [`generate-changelog`](resources/coding-agent-workflows/generate-changelog/) | experimental | read-only | You need customer-facing release notes from git history |
 | [`record-terminal-demo`](resources/coding-agent-workflows/record-terminal-demo/) | experimental | approval-required | You need a terminal demo of a CLI recorded with VHS, rendered and visually checked |
 
