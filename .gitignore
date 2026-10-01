@@ -1,0 +1,18 @@
+# Never commit a Bruin project config or any credential file.
+.bruin.yml
+.bruin.yaml
+.env
+credentials.json
+service-account.json
+
+# Python artefacts from running the sample scripts.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local databases from trying a template.
+*.db
+*.db.wal
+
+.DS_Store

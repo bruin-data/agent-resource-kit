@@ -1,0 +1,59 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, so a resource going stale surfaces on its own rather than waiting
+    # for someone to notice.
+    - cron: "0 9 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  catalogue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Frontmatter, status labels, upstream notes and their dates, index
+      # completeness, local links, forbidden files. No dependencies.
+      - name: Validate catalogue
+        run: ./tests/check.py
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # This repository promises it carries no credentials. An off-the-shelf
+      # scanner is better maintained than anything hand-rolled here. The CLI
+      # image is used directly because gitleaks-action needs a paid license
+      # key on organization repositories.
+      - name: Scan for credentials
+        run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1
+          git /repo --redact --verbose
+
+  links:
+    runs-on: ubuntu-latest
+    # External links are checked on a schedule rather than per pull request: a
+    # network failure unrelated to the change should not block a merge. Nearly
+    # every resource here points at upstream documentation, so this is the check
+    # most likely to catch real rot.
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check external links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --accept 200,206,429 './**/*.md'
+          fail: true

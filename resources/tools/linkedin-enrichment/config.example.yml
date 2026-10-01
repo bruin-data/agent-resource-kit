@@ -1,0 +1,43 @@
+# Example configuration for linkedin-enrichment. Copy to
+# `linkedin-enrichment.yml` and edit.
+#
+#   cp config.example.yml linkedin-enrichment.yml
+#
+# The CLI finds it via `--config PATH`, the LINKEDIN_ENRICHMENT_CONFIG
+# environment variable, or a file named linkedin-enrichment.yml / .yaml / .json
+# in the working directory. The file is optional: without it the defaults below
+# are what you get.
+#
+# NO CREDENTIAL BELONGS IN THIS FILE. The Apify token is read from the
+# APIFY_API_TOKEN environment variable and from nowhere else.
+
+defaults:
+  # Reuse a cached row this recent instead of paying for another actor run.
+  # Overridden per command by --max-age-days.
+  max_age_days: 30
+
+  # The same, for profile-posts only. Shorter, because post engagement counts
+  # move hourly. max_age_days above does not apply to post history.
+  post_max_age_days: 3
+
+  # Where the local SQLite cache lives. Gitignore it: it holds personal data.
+  # LINKEDIN_CACHE_PATH overrides this, and --cache-path overrides both.
+  cache_path: linkedin-cache.db
+
+# Which Apify Store actor backs each command. These defaults are the actors the
+# scripts were written against; they are third-party software, and any of them
+# can change its output shape, change its price or disappear. Override one here
+# when you have found a better or cheaper actor, or when one is retired.
+#
+# Check the actor's own page on the Apify Store for its input schema before you
+# swap it in: the CLI builds input for the actors listed here, so a replacement
+# with a different schema needs a change in scripts/cli.py too.
+actors:
+  company: ipHw77V2NMJPy8sbS
+  profile: yZnhB5JewWf9xSmoM
+  people-search: pIyH7237rHZBxoO7q
+  company-search: QwLfX9hYQXhA84LY3
+  post-search: 5QnEH5N71IK2mFLrP
+  profile-posts: LQQIXN9Othf8f7R5n
+  job-search: KE649tixwpoRnZtJJ
+  job: 39xxtfNEwIEQ1hRiM

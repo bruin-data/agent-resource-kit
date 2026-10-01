@@ -1,0 +1,47 @@
+# Example configuration for attio-cli. Copy to `attio-cli.yml` and edit.
+#
+#   cp config.example.yml attio-cli.yml
+#
+# The CLI finds it via `--config PATH`, the ATTIO_CLI_CONFIG environment
+# variable, or a file named attio-cli.yml / attio-cli.yaml / attio-cli.json in
+# the working directory. The file is entirely optional: without it, whatever you
+# type as an object or list name is sent to Attio as the slug.
+#
+# NOTHING BELOW IS A STANDARD ATTIO SCHEMA. Every workspace has its own objects,
+# attributes and lists, including renamed standard ones. Discover yours and use
+# the real slugs:
+#
+#   python3 scripts/cli.py objects           # object slugs in your workspace
+#   python3 scripts/cli.py attrs <slug>      # attribute slugs on one object
+#   python3 scripts/cli.py lists             # list slugs
+#   python3 scripts/cli.py list-attrs <slug> # attribute slugs on one list
+#
+# No credential belongs in this file. The API key is read from the
+# ATTIO_API_KEY environment variable and from nowhere else.
+
+defaults:
+  # Page size for search/query/entries when --limit is not given.
+  limit: 25
+
+# Aliases you type -> the object slug in your workspace. An alias may be a bare
+# slug string, or a mapping with these keys:
+#   slug              (required) the api_slug from `objects`
+#   search_attribute  attribute the `search` command matches with $contains;
+#                     defaults to "name", which not every object has
+#   display           attributes shown by `--format table`
+objects:
+  company:
+    slug: companies
+    search_attribute: name
+    display: [name, domains]
+  person:
+    slug: people
+    search_attribute: name
+    display: [name, email_addresses]
+  # Shorthand form, when the defaults are fine:
+  # deal: deals
+
+# Aliases you type -> the list slug in your workspace.
+lists: {}
+  # pipeline:
+  #   slug: your_list_slug
