@@ -1,5 +1,45 @@
 # agent-resource-kit
 
+**Give Claude Code, Cursor and Codex your startup's data.**
+[`startup-data-kit`](resources/startup-data-kit/) is a set of agent skills that
+set up a maintained Bruin pipeline for revenue, marketing, product, finance or
+AI coding spend, then answer questions from it without the confident wrong number.
+
+```bash
+npx skills add bruin-data/agent-resource-kit
+```
+
+![The ai-coding-usage template building on fake Claude Code and Cursor data in DuckDB, then a weekly cost query](demo/ai-coding-spend.gif)
+
+### Try it in 2 minutes
+
+No credentials and no warehouse: the real `ai-coding-usage` template, fake
+Claude Code and Cursor usage, DuckDB. Needs the
+[Bruin CLI](https://getbruin.com/docs/bruin/getting-started/introduction/installation.html)
+and git; run it in an empty folder outside any git repository.
+
+```bash
+# 1. Get the template and the sample data
+git clone --depth 1 https://github.com/bruin-data/agent-resource-kit
+bruin init ai-coding-usage ai-coding-demo
+
+# 2. Swap the Anthropic and Cursor API assets for the fake CSVs
+cp agent-resource-kit/resources/startup-data-kit/ai-coding-spend/sample-data/*.{asset.yml,csv} \
+   bruin/ai-coding-demo/assets/raw/
+
+# 3. Build every table on DuckDB, then query one
+cd bruin
+bruin run ai-coding-demo --full-refresh --workers 1 --start-date 2026-09-14 --end-date 2026-09-27
+bruin query -c duckdb-default -q "SELECT strftime(date_trunc('week', usage_date), '%Y-%m-%d') AS week, platform, CAST(SUM(total_tokens) AS BIGINT) AS tokens, ROUND(SUM(estimated_cost_usd), 2) AS est_cost_usd FROM marts.ai_coding_usage_by_user_day GROUP BY ALL ORDER BY ALL"
+```
+
+Then ask your agent, with the skill installed, why estimated Claude Code cost
+rose in the second week. [`sample-data/`](resources/startup-data-kit/ai-coding-spend/sample-data/)
+says what the data is and why each flag is there; `--full-refresh` is only safe
+because the demo database is new.
+
+## What is here
+
 **Open-source skills for AI agents.** Drop a folder into your project and your
 agent knows how to do the thing.
 
@@ -14,13 +54,6 @@ others already load automatically. Two kinds, mixed freely:
 to ask questions, work through a setup with someone, and share what you have
 built with these. If a skill sent your agent somewhere unhelpful, that is worth
 saying there as much as in an issue.
-
-> **Example code, provided as-is.** This repository is not part of the Bruin
-> platform, not a supported Bruin product, and not covered by any support
-> agreement or SLA. It is documentation and sample scripts: it stores no customer
-> data, holds no credentials, and has no access to any production system. Scripts
-> run on your own machine, under your own credentials, configured by you. See
-> [LICENSE](LICENSE) for the warranty disclaimer.
 
 ## Resources
 
@@ -85,7 +118,26 @@ and do not guarantee.
 
 ## Use it
 
-**Copy the folder.** Your agent picks it up with no further setup.
+**With [skills.sh](https://skills.sh)**, for Claude Code, Cursor, Codex and
+the other agents it supports. It lists every skill here and asks which to
+install and for which agents.
+
+```bash
+npx skills add bruin-data/agent-resource-kit
+npx skills add bruin-data/agent-resource-kit --skill ai-coding-spend   # just one
+npx skills add bruin-data/agent-resource-kit --list                    # look first
+```
+
+**As a Claude Code plugin.** Each group is a plugin: `bruin-agent`,
+`startup-data-kit`, `data-engineering-skills`, `coding-agent-workflows` and
+`tools`. Plugin skills are namespaced, such as `/startup-data-kit:ai-coding-spend`.
+
+```text
+/plugin marketplace add bruin-data/agent-resource-kit
+/plugin install startup-data-kit@bruin-agent-resource-kit
+```
+
+**Or copy the folder.** Your agent picks it up with no further setup.
 
 ```bash
 git clone https://github.com/bruin-data/agent-resource-kit
@@ -107,6 +159,17 @@ I need to work out why our MRR stopped growing last quarter.
 ```
 
 It reads the index, then the one skill it needs.
+
+## Tested
+
+> **TODO:** results pending. The comparison runs separately and fills in this
+> table.
+
+| Question | Without skill | With skill |
+|---|---|---|
+| TODO | TODO | TODO |
+| TODO | TODO | TODO |
+| TODO | TODO | TODO |
 
 ## Upstream documentation is the source of truth
 
@@ -158,9 +221,19 @@ has the shape, the labels, and what gets rejected.
 ```
 
 No dependencies. It checks frontmatter, status labels, upstream notes and their
-dates, index completeness, local links, and files that must never be committed.
+dates, index and plugin manifest completeness, local links, sample data that
+uses only reserved example domains, and files that must never be committed.
 CI runs it on every change, scans for credentials with gitleaks, and checks
 external links weekly so a dead upstream link surfaces on its own.
+
+## Provided as-is
+
+> **Example code, provided as-is.** This repository is not part of the Bruin
+> platform, not a supported Bruin product, and not covered by any support
+> agreement or SLA. It is documentation and sample scripts: it stores no customer
+> data, holds no credentials, and has no access to any production system. Scripts
+> run on your own machine, under your own credentials, configured by you. See
+> [LICENSE](LICENSE) for the warranty disclaimer.
 
 ## Licence
 

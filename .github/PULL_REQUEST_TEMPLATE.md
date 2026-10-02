@@ -16,7 +16,7 @@ One or two sentences.
 
 - [ ] `name` matches the folder, `description` starts with `Use when`
 - [ ] `**Status:**` and `**Risk:**` line, chosen conservatively
-- [ ] Listed in the root `README.md` index
+- [ ] Listed in the root `README.md` index and in `.claude-plugin/marketplace.json`
 - [ ] Says what the tool cannot do, and what the user has to decide
 - [ ] No credentials, customer data or production output
 - [ ] Does not ask a user to paste a credential into a conversation

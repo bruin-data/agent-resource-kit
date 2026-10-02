@@ -1,0 +1,71 @@
+{
+  "name": "bruin-agent-resource-kit",
+  "owner": {
+    "name": "Bruin",
+    "url": "https://github.com/bruin-data"
+  },
+  "description": "Example agent skills for working with a startup's data through Bruin. Sample code, provided as-is; not a supported Bruin product.",
+  "plugins": [
+    {
+      "name": "bruin-agent",
+      "description": "Install the Bruin CLI, create a project, choose a template, connect a source and register the Bruin MCP server.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./resources/bruin-agent"
+      ]
+    },
+    {
+      "name": "startup-data-kit",
+      "description": "Set up a Bruin template for a startup's data and answer questions from it: revenue, marketing, product, web, AI search, finance, support, AI coding spend, sheets and Notion.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./resources/startup-data-kit/ai-coding-spend",
+        "./resources/startup-data-kit/ai-search-visibility",
+        "./resources/startup-data-kit/finance-accounting",
+        "./resources/startup-data-kit/marketing-analytics",
+        "./resources/startup-data-kit/product-analytics",
+        "./resources/startup-data-kit/revenue-analytics",
+        "./resources/startup-data-kit/sheets-and-notion",
+        "./resources/startup-data-kit/support-analytics",
+        "./resources/startup-data-kit/web-analytics"
+      ]
+    },
+    {
+      "name": "data-engineering-skills",
+      "description": "Keep Bruin pipelines healthy: triage failures, investigate anomalies, backfill safely, open maintenance pull requests, report what happened.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./resources/data-engineering-skills/anomaly-investigate",
+        "./resources/data-engineering-skills/bruin-builtin-skills",
+        "./resources/data-engineering-skills/maintenance-pr",
+        "./resources/data-engineering-skills/pipeline-backfill",
+        "./resources/data-engineering-skills/pipeline-report",
+        "./resources/data-engineering-skills/pipeline-triage"
+      ]
+    },
+    {
+      "name": "coding-agent-workflows",
+      "description": "Repeatable work on a codebase: customer-facing changelogs and recorded terminal demos.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./resources/coding-agent-workflows/generate-changelog",
+        "./resources/coding-agent-workflows/record-terminal-demo"
+      ]
+    },
+    {
+      "name": "tools",
+      "description": "Sample scripts an agent can shell out to, run with your own credentials: Attio CRM, blog cover images, LinkedIn enrichment via Apify.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./resources/tools/attio-cli",
+        "./resources/tools/blog-image-generator",
+        "./resources/tools/linkedin-enrichment"
+      ]
+    }
+  ]
+}
