@@ -25,13 +25,17 @@ domain reconciling against its source before adding a second.
 
 ## How each skill works
 
-Every folder holds exactly these three files:
+Every folder holds these three files:
 
 | File | What it is |
 |---|---|
 | `SKILL.md` | What is specific to the domain: which templates to consider, what usually needs the user's input, what to reconcile against |
 | `workflow.md` | The shared setup process, from installing Bruin to reconciling the first run |
 | `analysis.md` | How to answer questions once the pipeline exists |
+
+`ai-coding-spend` also carries a [`sample-data/`](ai-coding-spend/sample-data/)
+folder: fake Claude Code and Cursor usage that runs its template on DuckDB with
+no credentials.
 
 `workflow.md` is identical in every folder, so a skill copied alone still works.
 `tests/check.py` fails if the copies drift; edit one and copy it to the rest.

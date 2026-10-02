@@ -158,12 +158,13 @@ confirm. Never write an unchecked claim as though you had checked it.
 
 Add a `**Status:**` and `**Risk:**` line under the heading. Be conservative:
 `experimental` unless someone other than the author has used it. Add the
-resource to the index in [`README.md`](README.md); the checker fails if you do
-not.
+resource to the index in [`README.md`](README.md) and to its group's plugin in
+[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json); the
+checker fails if you do not.
 
 Run `./tests/check.py` before finishing. No dependencies. It verifies
-frontmatter, labels, upstream notes and their dates, index completeness, local
-links, and forbidden files.
+frontmatter, labels, upstream notes and their dates, index and plugin manifest
+completeness, local links, sample data, and forbidden files.
 
 Never commit a credential, customer record or production output. `.bruin.yml`,
 `.env` and similar are gitignored, and both the checker and gitleaks will fail
