@@ -1,8 +1,7 @@
 # Contributing
 
-What makes this catalogue worth reading is that someone has actually used every
-resource in it. That is the bar. Most of what follows is mechanics for showing
-it.
+Every resource in this catalogue should have been used in practice by someone.
+That is the standard. Most of what follows explains how to show it.
 
 Resources you have used are welcome. So are bug reports, better wording, and "I
 followed this skill and my agent did the wrong thing", which is often the most
@@ -117,7 +116,7 @@ usually what it admits.
   have a "what this cannot tell you" section, because the alternative is an
   agent producing a confident answer to a question the data cannot answer.
 - **Say what the user has to decide.** The startup-data-kit skills list what
-  usually needs the user's input, because the numbers genuinely depend on it. A
+  usually needs the user's input, because the numbers depend on it. A
   resource that picks silently teaches the user that a hard question is settled.
 - **Name the traps specific to that data.** Generic advice gets skipped. "GA4
   thresholding means totals will not equal the sum of a breakdown" does not.
@@ -151,7 +150,7 @@ forbidden files.
 
 Then say, in the pull request: what the resource does in one sentence, what you
 ran to verify it, which status and risk you chose and why, and anything you
-could not test. That last one is genuinely useful. "I could not test the Codex
+could not test. That last one matters. "I could not test the Codex
 path" gets a resource merged with an accurate description; silence gets it
 merged with a wrong one.
 

@@ -44,18 +44,19 @@ The skills carry no fixed list of questions: the agent reads the template as it
 is today and works out what this user must decide. Answers go in `decisions.md`
 beside the pipeline.
 
-## The joins are where the value is
+## Questions that span domains
 
-The questions worth the setup cross domains:
+Many useful questions need data from more than one domain:
 
 | Question | Domains |
 |---|---|
 | Which customers are about to churn | revenue + product |
 | Which channels bring customers who stay | marketing + revenue |
-| Where the funnel actually leaks | web + product + revenue |
+| Where users drop out of the funnel | web + product + revenue |
 | Whether content investment pays back | ai-search-visibility + web + revenue |
 | Which customers cost more to support than they pay | support + revenue |
 | Actuals against the plan | sheets-and-notion + revenue or finance |
 
-Each needs a stable identifier shared by the sources. Where there is none, that
-is the work, and the skills say so rather than answer from one side.
+Each needs a stable identifier shared by the sources, such as a customer ID or
+email address. Where none exists, building that mapping comes first, and the
+skills say so instead of answering from one source alone.

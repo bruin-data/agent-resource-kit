@@ -1,4 +1,4 @@
-# Try ai-coding-spend in 2 minutes: the ai-coding-usage template on fake data.
+# Try ai-coding-spend with sample data: the ai-coding-usage template on fake data.
 #
 # Recorded with Bruin CLI v0.11.767 and VHS. Re-render from this folder:
 #

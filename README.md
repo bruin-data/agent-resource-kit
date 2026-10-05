@@ -1,9 +1,9 @@
 # agent-resource-kit
 
-**Give Claude Code, Cursor and Codex your startup's data.**
-[`startup-data-kit`](resources/startup-data-kit/) is a set of agent skills that
-set up a maintained Bruin pipeline for revenue, marketing, product, finance or
-AI coding spend, then answer questions from it without the confident wrong number.
+[`startup-data-kit`](resources/startup-data-kit/) is a set of agent skills for
+Claude Code, Cursor and Codex. They guide an agent through setting up a Bruin
+pipeline for revenue, marketing, product, finance or AI coding spend data, and
+through answering questions from the tables it builds.
 
 ```bash
 npx skills add bruin-data/agent-resource-kit
@@ -11,12 +11,12 @@ npx skills add bruin-data/agent-resource-kit
 
 ![The ai-coding-usage template building on fake Claude Code and Cursor data in DuckDB, then a weekly cost query](demo/ai-coding-spend.gif)
 
-### Try it in 2 minutes
+### Try it with sample data
 
-No credentials and no warehouse: the real `ai-coding-usage` template, fake
-Claude Code and Cursor usage, DuckDB. Needs the
+This runs the `ai-coding-usage` template on DuckDB with generated Claude Code
+and Cursor usage data. It needs no credentials and no warehouse, only the
 [Bruin CLI](https://getbruin.com/docs/bruin/getting-started/introduction/installation.html)
-and git; run it in an empty folder outside any git repository.
+and git. Run it in an empty folder outside any git repository.
 
 ```bash
 # 1. Get the template and the sample data
@@ -33,27 +33,25 @@ bruin run ai-coding-demo --full-refresh --workers 1 --start-date 2026-09-14 --en
 bruin query -c duckdb-default -q "SELECT strftime(date_trunc('week', usage_date), '%Y-%m-%d') AS week, platform, CAST(SUM(total_tokens) AS BIGINT) AS tokens, ROUND(SUM(estimated_cost_usd), 2) AS est_cost_usd FROM marts.ai_coding_usage_by_user_day GROUP BY ALL ORDER BY ALL"
 ```
 
-Then ask your agent, with the skill installed, why estimated Claude Code cost
+Then, with the skill installed, ask your agent why estimated Claude Code cost
 rose in the second week. [`sample-data/`](resources/startup-data-kit/ai-coding-spend/sample-data/)
-says what the data is and why each flag is there; `--full-refresh` is only safe
-because the demo database is new.
+describes the data and explains each flag. `--full-refresh` drops and rebuilds
+every table, and is used here only because the demo database is new.
 
 ## What is here
 
-**Open-source skills for AI agents.** Drop a folder into your project and your
-agent knows how to do the thing.
+Open-source skills for AI agents. Each resource is a `SKILL.md` file in the
+format that Claude Code, Cursor, Codex and other agents load automatically.
+Copy a folder into a project and the agent follows its instructions. There are
+two kinds:
 
-Each resource is a `SKILL.md` in the format Claude Code, Cursor, Codex and
-others already load automatically. Two kinds, mixed freely:
-
-- **Pointers** to tools that already exist, so an agent reaches for the
-  maintained thing instead of reinventing it.
-- **Task skills** for judgement no tool encodes.
+- **Pointers** to existing tools, so an agent uses the maintained tool instead
+  of writing its own.
+- **Task skills** for decisions that no existing tool covers.
 
 **[Join the Slack community](https://join.slack.com/t/bruindatacommunity/shared_invite/zt-3cymzktqu-bvFxPGyQHpvi~dok_W0L3w)**
-to ask questions, work through a setup with someone, and share what you have
-built with these. If a skill sent your agent somewhere unhelpful, that is worth
-saying there as much as in an issue.
+for questions, help with a setup, and feedback. If a skill led your agent in the
+wrong direction, report it there or in an issue.
 
 ## Resources
 
@@ -137,7 +135,8 @@ npx skills add bruin-data/agent-resource-kit --list                    # look fi
 /plugin install startup-data-kit@bruin-agent-resource-kit
 ```
 
-**Or copy the folder.** Your agent picks it up with no further setup.
+**Or copy the folder.** Agents load skills from these folders without further
+configuration.
 
 ```bash
 git clone https://github.com/bruin-data/agent-resource-kit
@@ -179,19 +178,19 @@ output, **upstream is right and the file here is stale.** Each resource says
 which version and date it was written against, and instructs the agent to check
 upstream and tell you when it finds a difference.
 
-These resources exist to say which tool to reach for and what to be careful
-about. They are not a second copy of anyone's manual.
+These resources say which tool to use and what to be careful about. They do not
+duplicate the tools' documentation.
 
-## What these are written to prevent
+## What the skills cover
 
-The failure mode with agents and business data is not an error message. It is a
-confident, well formatted, wrong number that someone forwards to an investor.
+The main risk when an agent works with business data is not an error message.
+It is a plausible number calculated from the wrong definition.
 
-So each skill covers the definitions that change the answer, the traps specific
-to that data, what the source genuinely cannot tell you, and what needs a
-human's approval. They point at maintained tools rather than reimplementing
-them, and link to upstream documentation rather than restating it so it cannot
-go stale.
+Each skill covers the definitions that change the answer, the known pitfalls of
+that data source, what the source cannot tell you, and which actions need a
+person's approval. Skills point to maintained tools instead of reimplementing
+them, and link to upstream documentation instead of copying it, so that they do
+not go out of date.
 
 ## Credentials
 
@@ -206,15 +205,15 @@ process list.
 
 Use browser OAuth, an interactive local prompt such as `bruin connections add`,
 an environment variable reference, or your secret manager. Ask for read-only
-scopes. A scoped credential is the control that actually holds; instructions in
-a file are not a sandbox.
+scopes. A scoped credential enforces limits; instructions in a file do not.
 
 This repository contains no credentials and no real business data.
 
 ## Contributing
 
-Resources you have actually used are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md)
-has the shape, the labels, and what gets rejected.
+Contributions of resources you have used in practice are welcome.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) describes the format, the labels, and what
+gets rejected.
 
 ```bash
 ./tests/check.py
@@ -224,7 +223,7 @@ No dependencies. It checks frontmatter, status labels, upstream notes and their
 dates, index and plugin manifest completeness, local links, sample data that
 uses only reserved example domains, and files that must never be committed.
 CI runs it on every change, scans for credentials with gitleaks, and checks
-external links weekly so a dead upstream link surfaces on its own.
+external links weekly to catch broken upstream links.
 
 ## Provided as-is
 
