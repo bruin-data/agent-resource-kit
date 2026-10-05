@@ -21,7 +21,7 @@ assets, and everything downstream is the template, unchanged.
 | `cursor_daily_usage.asset.yml` + `.csv` | `raw.cursor_daily_usage` | One row per person and day, active or not |
 | `cursor_usage_events.asset.yml` + `.csv` | `raw.cursor_usage_events` | One row per request, `tokenUsage` as JSON |
 
-## Try it in 2 minutes
+## Try it
 
 Needs the [Bruin CLI](https://getbruin.com/docs/bruin/getting-started/introduction/installation.html)
 and git. Run it in an empty folder that is not inside a git repository.
@@ -42,10 +42,11 @@ bruin query -c duckdb-default -q "SELECT strftime(date_trunc('week', usage_date)
 ```
 
 Then install the skill and ask your agent something the data can answer, such
-as "why did estimated Claude Code cost rise in the second week?" There is a
-real answer in there, and two traps.
+as "why did estimated Claude Code cost rise in the second week?" The data has a
+definite answer to that question, and two details that can lead an agent to a
+wrong one.
 
-Why the flags:
+What the flags do:
 
 - `--full-refresh`: the template's per-day marts use the `time_interval`
   strategy, which needs the table to exist, and Bruin's
