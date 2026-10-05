@@ -14,5 +14,7 @@ venv/
 # Local databases from trying a template.
 *.db
 *.db.wal
+*.duckdb
+*.duckdb.wal
 
 .DS_Store

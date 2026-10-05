@@ -14,6 +14,7 @@ Exit 0 if everything passes. Exit 1 on any error. Warnings never fail the run.
 from __future__ import annotations
 
 import datetime
+import json
 import pathlib
 import re
 import sys
@@ -21,6 +22,7 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parent.parent
 RESOURCES = REPO / "resources"
 README = REPO / "README.md"
+MARKETPLACE = REPO / ".claude-plugin" / "marketplace.json"
 
 VALID_STATUS = {"stable", "experimental", "community"}
 VALID_RISK = {"read-only", "approval-required", "write-capable"}
@@ -49,6 +51,10 @@ INTERNAL_PATTERNS: list[tuple[str, str]] = [
     ("internal Bruin email domain", r"@getbruin\.com"),
     ("GCP service account", r"[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com"),
 ]
+
+# Sample data must be invented. Every email address in it has to sit on a
+# domain reserved for examples, so a real address pasted in fails the build.
+SAMPLE_EMAIL_DOMAINS = {"example.com", "example.org", "example.net"}
 
 # Lines carrying this marker are exempt, for the rare case where such a string
 # genuinely belongs in documentation.
@@ -210,7 +216,7 @@ def check_internal_identifiers() -> None:
     for path in sorted(REPO.rglob("*")):
         if not path.is_file() or any(p in {".git", ".context"} for p in path.parts):
             continue
-        if path.suffix not in {".md", ".py", ".yml", ".yaml", ".json", ".toml", ".sh", ".txt"}:
+        if path.suffix not in {".md", ".py", ".yml", ".yaml", ".json", ".toml", ".sh", ".txt", ".csv", ".tape"}:
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -243,6 +249,60 @@ def check_shared_files() -> None:
                 err(copy, f"differs from {copies[0].relative_to(REPO)}; shared copies must be identical")
 
 
+def check_marketplace() -> None:
+    """The Claude Code marketplace loads only the skill folders it lists, and
+    skills.sh stops searching the whole tree once a manifest exists. So a skill
+    missing from the manifest is invisible to both install methods."""
+    if not MARKETPLACE.exists():
+        err(".claude-plugin/marketplace.json", "missing; it is how both one-line installs find skills")
+        return
+    try:
+        manifest = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        err(MARKETPLACE, f"not valid JSON: {exc}")
+        return
+    for key in ("name", "owner", "plugins"):
+        if key not in manifest:
+            err(MARKETPLACE, f"missing required field '{key}'")
+    listed: dict[str, str] = {}
+    names: set[str] = set()
+    for plugin in manifest.get("plugins", []):
+        name = plugin.get("name", "")
+        if not name or "source" not in plugin:
+            err(MARKETPLACE, f"plugin {name or '(unnamed)'} needs a name and a source")
+        if name in names:
+            err(MARKETPLACE, f"plugin name '{name}' is listed twice")
+        names.add(name)
+        for skill in plugin.get("skills", []):
+            rel = skill.removeprefix("./").rstrip("/")
+            if not (REPO / rel / "SKILL.md").exists():
+                err(MARKETPLACE, f"plugin '{name}' lists '{skill}', which has no SKILL.md")
+            if rel in listed:
+                err(MARKETPLACE, f"'{skill}' is in both '{listed[rel]}' and '{name}'")
+            listed[rel] = name
+    for skill in sorted(RESOURCES.rglob("SKILL.md")):
+        rel = str(skill.parent.relative_to(REPO))
+        if rel not in listed:
+            err(MARKETPLACE, f"'{rel}' is not listed in any plugin, so neither install method finds it")
+
+
+def check_sample_data() -> None:
+    """Sample data ships with the repository, so it must be visibly invented."""
+    for path in sorted(RESOURCES.rglob("sample-data/*")):
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            err(path, "sample data must be plain text so it can be reviewed")
+            continue
+        for line_no, line in enumerate(text.splitlines(), 1):
+            for domain in re.findall(r"[\w.+-]+@([\w-]+(?:\.[\w-]+)+)", line):
+                if domain.lower() not in SAMPLE_EMAIL_DOMAINS:
+                    err(path, f"line {line_no}: email on '{domain}'; sample data may only use "
+                              f"{', '.join(sorted(SAMPLE_EMAIL_DOMAINS))}")
+
+
 def check_forbidden_files() -> None:
     for path in REPO.rglob("*"):
         if ".git" in path.parts or not path.is_file():
@@ -266,6 +326,8 @@ def main() -> int:
     check_links()
     check_internal_identifiers()
     check_shared_files()
+    check_marketplace()
+    check_sample_data()
     check_forbidden_files()
 
     docs = len(list(RESOURCES.rglob("*.md")))

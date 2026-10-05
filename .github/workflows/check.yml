@@ -22,8 +22,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Frontmatter, status labels, upstream notes and their dates, index
-      # completeness, local links, forbidden files. No dependencies.
+      # Frontmatter, status labels, upstream notes and their dates, index and
+      # plugin manifest completeness, local links, sample data, forbidden
+      # files. No dependencies.
       - name: Validate catalogue
         run: ./tests/check.py
 

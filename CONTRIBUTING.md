@@ -57,7 +57,11 @@ The rules the checker enforces:
   carries a date. A file that drives no tool gets a one-line precedence note
   instead, saying what wins where it disagrees; the checker does not enforce
   that one.
-- Every resource is listed in the root `README.md` index.
+- Every resource is listed in the root `README.md` index, and its folder in one
+  plugin's `skills` list in `.claude-plugin/marketplace.json`. Both one-line
+  installs read that manifest, so a skill missing from it cannot be installed.
+- Sample data lives in a `sample-data/` folder, is invented, and uses only
+  `example.com`, `example.org` or `example.net` email addresses.
 - Local links resolve, and no internal identifiers (Slack channel IDs, project
   ULIDs, service accounts) or forbidden files (`.bruin.yml`, `.env`) appear.
 - Files shared across a group of skills stay identical. Every
@@ -142,7 +146,8 @@ prevent.
 ```
 
 No dependencies. It checks frontmatter, status labels, upstream notes and their
-dates, index completeness, local links, and forbidden files.
+dates, index and plugin manifest completeness, local links, sample data, and
+forbidden files.
 
 Then say, in the pull request: what the resource does in one sentence, what you
 ran to verify it, which status and risk you chose and why, and anything you

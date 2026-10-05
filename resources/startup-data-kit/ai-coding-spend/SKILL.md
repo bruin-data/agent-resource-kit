@@ -10,7 +10,7 @@ description: Use when a startup wants AI coding tool usage and spend set up or a
 > **Upstream documentation wins.** Where this file disagrees with the [Bruin
 > docs](https://getbruin.com/docs/bruin/overview.html), `bruin --help`, or
 > Anthropic's or Cursor's API documentation, those are right and this file is
-> stale. Written against Bruin CLI `v0.11.766`, checked 2026-10-01.
+> stale. Written against Bruin CLI `v0.11.767`, checked 2026-10-02.
 
 Sets up a Claude Code and Cursor usage pipeline and answers adoption and cost
 questions from it. It exists to prevent an estimated cost being read as the
@@ -19,6 +19,10 @@ bill, and usage data being turned into a ranking of engineers.
 ## Set up
 
 Follow [workflow.md](workflow.md).
+
+**No credentials yet?** [sample-data/](sample-data/README.md) runs the template
+on fake usage in DuckDB. Use it to show the user what they will get; never
+present its numbers as theirs.
 
 > **Important: do not ask a fixed list of questions.** Read the template as it
 > is today and work out which of its choices this user needs to confirm.
@@ -33,6 +37,7 @@ theirs to build.
 - Coverage is Claude Code on the first-party Anthropic API, and Cursor; Bedrock, Vertex AI, Foundry, Claude Platform on AWS, Claude Enterprise claude.ai users and every other tool are silently missing.
 - Cost columns are estimates, not the bill, built differently per vendor, with no seat fees; no seat list is ingested.
 - History lives only in the marts; `--full-refresh` drops it.
+- A first run fails on the per-day marts until they exist; Bruin's materialization docs say to create them with `--full-refresh`, the template README does not. Ask first, and only while there is no history.
 
 **Usually needs the user's input:**
 

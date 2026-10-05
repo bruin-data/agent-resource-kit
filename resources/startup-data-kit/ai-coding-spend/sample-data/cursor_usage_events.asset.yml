@@ -1,0 +1,44 @@
+name: raw.cursor_usage_events
+type: duckdb.seed
+
+description: Fake sample Cursor usage events, loaded from cursor_usage_events.csv in place of the Cursor Admin API. Every value is invented.
+
+columns:
+  - name: timestamp
+    type: string
+    description: Event timestamp as epoch milliseconds or an ISO timestamp.
+    primary_key: true
+    checks:
+      - name: not_null
+  - name: userEmail
+    type: string
+    description: Email address of the user who made the request.
+    primary_key: true
+    checks:
+      - name: not_null
+  - name: model
+    type: string
+    description: Model used for the request.
+  - name: kind
+    type: string
+    description: Cursor usage or billing category.
+  - name: maxMode
+    type: boolean
+    description: Whether Cursor Max Mode was enabled.
+  - name: requestsCosts
+    type: numeric
+    description: Cursor request cost units.
+  - name: isTokenBasedCall
+    type: boolean
+    description: Whether token-level usage and cost are available.
+  - name: tokenUsage
+    type: string
+    description: Input, output, cache, and cost details for token-based calls.
+  - name: isFreeBugbot
+    type: boolean
+    description: Whether the event was a free Bugbot request.
+
+parameters:
+  path: cursor_usage_events.csv
+  # Keep the camelCase column names the template staging SQL expects.
+  schema_naming: direct
